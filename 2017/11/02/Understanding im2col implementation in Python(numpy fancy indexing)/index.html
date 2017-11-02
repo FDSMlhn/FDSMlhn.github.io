@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="hexo," />
 
 
 
@@ -84,15 +84,19 @@
 
 
 
-<meta name="description" content="Strong Mind = Success">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Nevermore">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta name="description" content="I see one of the im2col implement as following in the Assignment2 of CS231n:
+123456789101112131415161718192021222324252627282930313233def get_im2col_indices(x_shape, field_height, field_width, padding">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Understanding im2col implementation in Python(numpy fancy indexing)">
+<meta property="og:url" content="http://yoursite.com/2017/11/02/Understanding im2col implementation in Python(numpy fancy indexing)/index.html">
 <meta property="og:site_name" content="Nevermore">
-<meta property="og:description" content="Strong Mind = Success">
+<meta property="og:description" content="I see one of the im2col implement as following in the Assignment2 of CS231n:
+123456789101112131415161718192021222324252627282930313233def get_im2col_indices(x_shape, field_height, field_width, padding">
+<meta property="og:updated_time" content="2017-11-02T19:45:12.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Nevermore">
-<meta name="twitter:description" content="Strong Mind = Success">
+<meta name="twitter:title" content="Understanding im2col implementation in Python(numpy fancy indexing)">
+<meta name="twitter:description" content="I see one of the im2col implement as following in the Assignment2 of CS231n:
+123456789101112131415161718192021222324252627282930313233def get_im2col_indices(x_shape, field_height, field_width, padding">
 
 
 
@@ -113,10 +117,10 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/11/02/Understanding im2col implementation in Python(numpy fancy indexing)/"/>
 
 
-  <title> Nevermore </title><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+  <title> Understanding im2col implementation in Python(numpy fancy indexing) | Nevermore </title><!-- hexo-inject:begin --><!-- hexo-inject:end -->
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="en">
@@ -137,9 +141,7 @@
     
   
 
-  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container one-collumn sidebar-position-left 
-   page-home 
- ">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container one-collumn sidebar-position-left page-post-detail ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
@@ -218,9 +220,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
   
@@ -240,10 +242,7 @@
             
             
               
-                
-                <a class="post-title-link" href="/2017/11/02/Understanding im2col implementation in Python(numpy fancy indexing)/" itemprop="url">
-                  Understanding im2col implementation in Python(numpy fancy indexing)
-                </a>
+                Understanding im2col implementation in Python(numpy fancy indexing)
               
             
           </h1>
@@ -272,6 +271,11 @@
           
 
           
+              &nbsp; | &nbsp;
+              <span class="page-pv"><i class="fa fa-file-o"></i>Views
+              <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+              </span>
+          
         </div>
       </header>
     
@@ -283,9 +287,7 @@
       
 
       
-        
-          
-            <p>I see one of the im2col implement as following in the Assignment2 of CS231n:</p>
+        <p>I see one of the im2col implement as following in the Assignment2 of CS231n:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">def get_im2col_indices(x_shape, field_height, field_width, padding=1, stride=1):</div><div class="line">    # First figure out what the size of the output should be</div><div class="line">    N, C, H, W = x_shape</div><div class="line">    assert (H + 2 * padding - field_height) % stride == 0</div><div class="line">    assert (W + 2 * padding - field_height) % stride == 0</div><div class="line">    out_height = (H + 2 * padding - field_height) / stride + 1</div><div class="line">    out_width = (W + 2 * padding - field_width) / stride + 1</div><div class="line"></div><div class="line">    i0 = np.repeat(np.arange(field_height), field_width)</div><div class="line">    i0 = np.tile(i0, C)</div><div class="line">    i1 = stride * np.repeat(np.arange(out_height), out_width)</div><div class="line">    j0 = np.tile(np.arange(field_width), field_height * C)</div><div class="line">    j1 = stride * np.tile(np.arange(out_width), out_height)</div><div class="line">    i = i0.reshape(-1, 1) + i1.reshape(1, -1)</div><div class="line">    j = j0.reshape(-1, 1) + j1.reshape(1, -1)</div><div class="line"></div><div class="line">    k = np.repeat(np.arange(C), field_height * field_width).reshape(-1, 1)</div><div class="line"></div><div class="line">    return (k, i, j)</div><div class="line"></div><div class="line">def im2col_indices(x, field_height, field_width, padding=1, stride=1):</div><div class="line">    &quot;&quot;&quot; An implementation of im2col based on some fancy indexing &quot;&quot;&quot;</div><div class="line">    # Zero-pad the input</div><div class="line">    p = padding</div><div class="line">    x_padded = np.pad(x, ((0, 0), (0, 0), (p, p), (p, p)), mode=&apos;constant&apos;)</div><div class="line"></div><div class="line">    k, i, j = get_im2col_indices(x.shape, field_height, field_width, padding,</div><div class="line">                                 stride)</div><div class="line"></div><div class="line">    cols = x_padded[:, k, i, j]</div><div class="line">    C = x.shape[1]</div><div class="line">    cols = cols.transpose(1, 2, 0).reshape(field_height * field_width * C, -1)</div><div class="line">    return cols</div></pre></td></tr></table></figure>
 <p>Even if I’ve used Python for three years long, It is still something mindblowing for me to understand how it works at first! In order to understand the mechanism of this function. It’s time to learn more about the fancy indexing in the Python.</p>
 <p>When we implement the Backpropagation of Neural Network, we might see something like this to compute the final Loss function.</p>
@@ -316,133 +318,59 @@
 <p>f you find any mistakes in this passage, feel free to contact me through my email: FDSM_lhn@yahoo.com. </p>
 <p>You’re welcome to share my passage to other websites or bloggers. <strong>But please add my name and link to this post alongside</strong>. Thank you!</p>
 
-          
+      
+    </div>
+
+    <div>
+      
         
+
       
     </div>
 
     <div>
       
-    </div>
+        
 
-    <div>
       
     </div>
 
     <footer class="post-footer">
       
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/10/22/Derivation of Back Propagation Through Time (BPTT) - Vanilla Recurrent Neural Network(RNN)/" itemprop="url">
-                  Derivation of Back Propagation Through Time (BPTT) - Vanilla Recurrent Neural Network(RNN)
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">Posted on</span>
-            <time itemprop="dateCreated" datetime="2017-10-22T00:00:00-07:00" content="2017-10-22">
-              2017-10-22
-            </time>
-          </span>
-
+        <div class="post-tags">
           
-
-          
-            
-          
-
-          
-
-          
-          
-
+            <a href="/tags/hexo/" rel="tag"><i class="fa fa-tag"></i>hexo</a>
           
         </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          <hr>
-<p>During the learning of RNN, I undergone a very tough time to deduce the BPTT for vanilla RNN. There are some pieces of work online that try to explain this process(click <a href="https://github.com/go2carter/nn-learn/blob/master/grad-deriv-tex/rnn-grad-deriv.pdf">here</a> or <a href="http://www.wildml.com/2015/10/recurrent-neural-networks-tutorial-part-3-backpropagation-through-time-and-vanishing-gradients/">here</a>). However, I found the derivation relevant to hidden state unsatisfying. Specificly, They are mixing up the partial derivative and total derivative, which is a total disaster for beginners to understand it. So I want to write this blog to put down some tough points in the process. And meanwhile, I will also skip the parts that’s been explained thoroughly in the posts above. Hopefully, this blog will help you save a bunch of time to wrap you head around this fantastic algorithm.<br>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2017/10/22/Derivation of Back Propagation Through Time (BPTT) - Vanilla Recurrent Neural Network(RNN)/#more" rel="contents">
-              Read more &raquo;
-            </a>
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/10/22/Derivation of Back Propagation Through Time (BPTT) - Vanilla Recurrent Neural Network(RNN)/" rel="next" title="Derivation of Back Propagation Through Time (BPTT) - Vanilla Recurrent Neural Network(RNN)">
+                <i class="fa fa-chevron-left"></i> Derivation of Back Propagation Through Time (BPTT) - Vanilla Recurrent Neural Network(RNN)
+              </a>
+            
           </div>
-        
-      
-    </div>
 
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
       
 
       
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </article>
 
 
-    
-  </section>
 
-  
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -450,6 +378,10 @@
 
 
           
+  <div class="comments" id="comments">
+    
+  </div>
+
 
         </div>
         
@@ -469,8 +401,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel  sidebar-panel-active ">
+      <section class="site-overview sidebar-panel ">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
@@ -513,6 +454,17 @@
 
       </section>
 
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">This post does not have a Table of Contents</p>
+            
+          </div>
+        </section>
       
 
     </div>
@@ -626,6 +578,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
 
   
 
