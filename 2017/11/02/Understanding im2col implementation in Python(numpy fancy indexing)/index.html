@@ -84,19 +84,16 @@
 
 
 
-<meta name="description" content="I see one of the im2col implement as following in the Assignment2 of CS231n:
-123456789101112131415161718192021222324252627282930313233def get_im2col_indices(x_shape, field_height, field_width, padding">
+<meta name="description" content="I see one of the im2col implement in Python  as following in the Assignment2 of CS231n:">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Understanding im2col implementation in Python(numpy fancy indexing)">
 <meta property="og:url" content="http://yoursite.com/2017/11/02/Understanding im2col implementation in Python(numpy fancy indexing)/index.html">
 <meta property="og:site_name" content="Nevermore">
-<meta property="og:description" content="I see one of the im2col implement as following in the Assignment2 of CS231n:
-123456789101112131415161718192021222324252627282930313233def get_im2col_indices(x_shape, field_height, field_width, padding">
-<meta property="og:updated_time" content="2017-11-02T19:45:12.000Z">
+<meta property="og:description" content="I see one of the im2col implement in Python  as following in the Assignment2 of CS231n:">
+<meta property="og:updated_time" content="2017-11-02T20:02:54.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Understanding im2col implementation in Python(numpy fancy indexing)">
-<meta name="twitter:description" content="I see one of the im2col implement as following in the Assignment2 of CS231n:
-123456789101112131415161718192021222324252627282930313233def get_im2col_indices(x_shape, field_height, field_width, padding">
+<meta name="twitter:description" content="I see one of the im2col implement in Python  as following in the Assignment2 of CS231n:">
 
 
 
@@ -287,7 +284,8 @@
       
 
       
-        <p>I see one of the im2col implement as following in the Assignment2 of CS231n:</p>
+        <p>I see one of the im2col implement in Python  as following in the Assignment2 of CS231n:</p>
+<a id="more"></a>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">def get_im2col_indices(x_shape, field_height, field_width, padding=1, stride=1):</div><div class="line">    # First figure out what the size of the output should be</div><div class="line">    N, C, H, W = x_shape</div><div class="line">    assert (H + 2 * padding - field_height) % stride == 0</div><div class="line">    assert (W + 2 * padding - field_height) % stride == 0</div><div class="line">    out_height = (H + 2 * padding - field_height) / stride + 1</div><div class="line">    out_width = (W + 2 * padding - field_width) / stride + 1</div><div class="line"></div><div class="line">    i0 = np.repeat(np.arange(field_height), field_width)</div><div class="line">    i0 = np.tile(i0, C)</div><div class="line">    i1 = stride * np.repeat(np.arange(out_height), out_width)</div><div class="line">    j0 = np.tile(np.arange(field_width), field_height * C)</div><div class="line">    j1 = stride * np.tile(np.arange(out_width), out_height)</div><div class="line">    i = i0.reshape(-1, 1) + i1.reshape(1, -1)</div><div class="line">    j = j0.reshape(-1, 1) + j1.reshape(1, -1)</div><div class="line"></div><div class="line">    k = np.repeat(np.arange(C), field_height * field_width).reshape(-1, 1)</div><div class="line"></div><div class="line">    return (k, i, j)</div><div class="line"></div><div class="line">def im2col_indices(x, field_height, field_width, padding=1, stride=1):</div><div class="line">    &quot;&quot;&quot; An implementation of im2col based on some fancy indexing &quot;&quot;&quot;</div><div class="line">    # Zero-pad the input</div><div class="line">    p = padding</div><div class="line">    x_padded = np.pad(x, ((0, 0), (0, 0), (p, p), (p, p)), mode=&apos;constant&apos;)</div><div class="line"></div><div class="line">    k, i, j = get_im2col_indices(x.shape, field_height, field_width, padding,</div><div class="line">                                 stride)</div><div class="line"></div><div class="line">    cols = x_padded[:, k, i, j]</div><div class="line">    C = x.shape[1]</div><div class="line">    cols = cols.transpose(1, 2, 0).reshape(field_height * field_width * C, -1)</div><div class="line">    return cols</div></pre></td></tr></table></figure>
 <p>Even if I’ve used Python for three years long, It is still something mindblowing for me to understand how it works at first! In order to understand the mechanism of this function. It’s time to learn more about the fancy indexing in the Python.</p>
 <p>When we implement the Backpropagation of Neural Network, we might see something like this to compute the final Loss function.</p>
@@ -307,10 +305,17 @@
 <p>Now it might be clearlier for you to see what’s going on here. We will take the first slice of index matrix (C <em> field_height </em> field_width, 1), which give you the outcome of first neuron to guide you the whole process. There will be out_height*out_width neurons in a single filter</p>
 <p>I will refer to second, third, fourth dimension of x(image) as C, H, W position.</p>
 <ol>
-<li>The index in the C position tries to traverse different channel, for each channel, there will be field_height <em> field_width numbers to be used, which indicates how many pixel every neuron try to capture in a single channel. Index will look like this:<br>$$<br>\underbrace{\underbrace{c,\dots,c}_{length\ of\ F_H </em> F_W } }_{c\ =\ 0,\dots,C-1}<br>$$</li>
-<li>The index in the H channel is try to traverse the height of each position in the neural. Due to the fact the implementation will get width-side pixel first. so it will have index like:<br>$$<br>\underbrace{\underbrace{0,\dots,0}_{length\ of\ F_W},\dots, \underbrace{F_H-1,\dots,F_H-1}_{length\ of\ F_W} }_{rep\ for\ C\ times}<br>$$</li>
-<li>Accordingly,The index in the W channel looks like this:<br>$$<br>\underbrace{\underbrace{0,1, \dots,F_W-1}_{F_H\ times}}_{rep\ for\ C\ times}<br>$$</li>
+<li>The index in the C position tries to traverse different channel, for each channel, there will be field_height * field_width numbers to be used, which indicates how many pixel every neuron try to capture in a single channel. Index will look like this:</li>
 </ol>
+<p>$$<br>\underbrace{\underbrace{c,\dots,c}_{length\ of\ F_H * F_W } }_{c\ =\ 0,\dots,C-1}<br>$$</p>
+<ol>
+<li>The index in the H channel is try to traverse the height of each position in the neural. Due to the fact the implementation will get width-side pixel first. so it will have index like:</li>
+</ol>
+<p>$$<br>\underbrace{\underbrace{0,\dots,0}_{length\ of\ F_W},\dots, \underbrace{F_H-1,\dots,F_H-1}_{length\ of\ F_W} }_{rep\ for\ C\ times}<br>$$</p>
+<ol>
+<li>Accordingly,The index in the W channel looks like this:</li>
+</ol>
+<p>$$<br>\underbrace{\underbrace{0,1, \dots,F_W-1}_{F_H\ times}}_{rep\ for\ C\ times}<br>$$</p>
 <p>The <code>i1</code>, <code>j1</code> in function<code>get_im2col_indices</code> is used to tuned the width and height index positionS according to different neurons. Because we also traverse width side first for all neurons in each filter, so we use <code>np.tile</code> for <code>j1</code>(row), <code>np.repeat</code> for <code>i1</code>(column).</p>
 <p>By the way, Python always operates first on trailing dimensions. For instance, the reshape will first spread out or gather the row-side in 2-D array:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">In [84]: np.array(list(range(12))).reshape(3,4)</div><div class="line">Out[84]: </div><div class="line">array([[ 0,  1,  2,  3],</div><div class="line">       [ 4,  5,  6,  7],</div><div class="line">       [ 8,  9, 10, 11]])</div><div class="line"></div><div class="line">#instead of </div><div class="line">array([[ 0,  3,  6,  9],</div><div class="line">       [ 1,  4,  7, 10],</div><div class="line">       [ 2,  5,  8, 11]])</div></pre></td></tr></table></figure>
