@@ -90,7 +90,7 @@
 <meta property="og:url" content="http://yoursite.com/2017/11/02/Understanding im2col implementation in Python(numpy fancy indexing)/index.html">
 <meta property="og:site_name" content="Nevermore">
 <meta property="og:description" content="I see one of the im2col implement in Python  as following in the Assignment2 of CS231n:">
-<meta property="og:updated_time" content="2017-11-03T23:50:15.000Z">
+<meta property="og:updated_time" content="2017-11-04T19:20:41.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Understanding im2col implementation in Python(numpy fancy indexing)">
 <meta name="twitter:description" content="I see one of the im2col implement in Python  as following in the Assignment2 of CS231n:">
@@ -416,6 +416,17 @@ array<span class="token punctuation">(</span><span class="token punctuation">[</
        <span class="token punctuation">[</span> <span class="token number">1</span><span class="token punctuation">,</span>  <span class="token number">4</span><span class="token punctuation">,</span>  <span class="token number">7</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
        <span class="token punctuation">[</span> <span class="token number">2</span><span class="token punctuation">,</span>  <span class="token number">5</span><span class="token punctuation">,</span>  <span class="token number">8</span><span class="token punctuation">,</span> <span class="token number">11</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
 </code></pre>
+<p>Bonus Part: Some tricks regarding numpy I found accidentally:</p>
+<ol>
+<li>You can use index None to add one more dimension to your np.array with ease. But be careful, the newly created object still get reference to the original one. Revising one will change another!</li>
+</ol>
+<pre class=" language-python"><code class="language-python">In <span class="token punctuation">[</span><span class="token number">91</span><span class="token punctuation">]</span><span class="token punctuation">:</span> x<span class="token punctuation">.</span>shape
+Out<span class="token punctuation">[</span><span class="token number">91</span><span class="token punctuation">]</span><span class="token punctuation">:</span> <span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span>
+
+In <span class="token punctuation">[</span><span class="token number">92</span><span class="token punctuation">]</span><span class="token punctuation">:</span> x<span class="token punctuation">[</span>None<span class="token punctuation">]</span><span class="token punctuation">.</span>shape
+Out<span class="token punctuation">[</span><span class="token number">92</span><span class="token punctuation">]</span><span class="token punctuation">:</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span>
+</code></pre>
+<p>(To be continued)</p>
 <hr>
 <p>f you find any mistakes in this passage, feel free to contact me through my email: FDSM_lhn@yahoo.com. </p>
 <p>You’re welcome to share my passage to other websites or bloggers. <strong>But please add my name and link to this post alongside</strong>. Thank you!</p>
