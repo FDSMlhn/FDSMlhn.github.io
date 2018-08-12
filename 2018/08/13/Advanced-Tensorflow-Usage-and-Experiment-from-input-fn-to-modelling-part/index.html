@@ -1,0 +1,1119 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="BackgroundWhile I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a sho">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Advanced Tensorflow Usage and Experiment: from input_fn to modelling part">
+<meta property="og:url" content="http://yoursite.com/2018/08/13/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/index.html">
+<meta property="og:site_name" content="Nevermore">
+<meta property="og:description" content="BackgroundWhile I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a sho">
+<meta property="og:updated_time" content="2018-08-12T12:42:12.697Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Advanced Tensorflow Usage and Experiment: from input_fn to modelling part">
+<meta name="twitter:description" content="BackgroundWhile I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a sho">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/08/13/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/"/>
+
+
+  <title> Advanced Tensorflow Usage and Experiment: from input_fn to modelling part | Nevermore </title><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="en">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Nevermore</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">Just begins.</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-schedule">
+          <a href="/schedule" rel="section">
+            
+            Schedule
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Advanced Tensorflow Usage and Experiment: from input_fn to modelling part
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2018-08-13T11:33:44+08:00" content="2018-08-12">
+              2018-08-12
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2018/08/13/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/08/13/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+              &nbsp; | &nbsp;
+              <span class="page-pv"><i class="fa fa-file-o"></i>Views
+              <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+              </span>
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <hr>
+<h2 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h2><p>While I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a short period of time , which was really painful experience for me. So I want to share this blog with you to ease your pain.<br><a id="more"></a></p>
+<h2 id="Some-complaints"><a href="#Some-complaints" class="headerlink" title="Some complaints"></a>Some complaints</h2><p>Although I have to admit Tensorflow is a very powerful computing framework: it has much stronger and larger community to support it compared with Pytorch; it allows you to get accees to some fancy, high-level attributes like tf.serving, tensorboard, distributed computation, etc, it has very steep learning curve and be super extra unfriendly to new users because of its rapid shift of version. Maybe you are first struggled with tf.placeholder version of data preprocessing and modelling and suddenly you find out it’s not how we use it anymore, how would you feel then? Well, if it’s the first blog you see, you know what i mean in a few hours…</p>
+<h2 id="What’s-exactly-in-this-blog"><a href="#What’s-exactly-in-this-blog" class="headerlink" title="What’s exactly in this blog"></a>What’s exactly in this blog</h2><p>In this blog I present most of experiments I did while writing the LSTM model code with Tensorflow version 1.9 and Python 3.6. I split my toy experiments into 4 parts: </p>
+<ul>
+<li>data input process</li>
+<li>LSTM cell test</li>
+<li>Shared embedding test</li>
+<li>Miscellany function</li>
+</ul>
+<h2 id="Who-should-read-this-blog"><a href="#Who-should-read-this-blog" class="headerlink" title="Who should read this blog"></a>Who should read this blog</h2><p>You should already get some taste of the tensorflow and want to know more detailed and useful knowledge without writing these toy examples yourself. I’m very confident these functions or tests will be helpful if you are dealing with high volumn of data and want to format your code neatly.</p>
+<h1 id="data-input-process"><a href="#data-input-process" class="headerlink" title="data input process"></a>data input process</h1><h2 id="tfrecord-saving-reading"><a href="#tfrecord-saving-reading" class="headerlink" title="tfrecord saving, reading"></a>tfrecord saving, reading</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf 
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+<span class="token keyword">def</span> <span class="token function">writedata</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+xlist <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">8</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">23</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+xstar_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">15</span><span class="token punctuation">,</span> <span class="token number">25</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">23.1</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+ylist <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span>
+<span class="token comment" spellcheck="true">#name_list = [['a'.encode('utf8'), 'b'.encode('utf8')], ['a'.encode('utf8'), 'c'.encode('utf8'), 'd'.encode('utf8')]]</span>
+name_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'b'</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token string">'b'</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+
+writer <span class="token operator">=</span> tf<span class="token punctuation">.</span>python_io<span class="token punctuation">.</span>TFRecordWriter<span class="token punctuation">(</span><span class="token string">"train.tfrecords"</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+x <span class="token operator">=</span> xlist<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+y <span class="token operator">=</span> ylist<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+x_star <span class="token operator">=</span> xstar_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+name <span class="token operator">=</span> name_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+example <span class="token operator">=</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Example<span class="token punctuation">(</span>features<span class="token operator">=</span>tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Features<span class="token punctuation">(</span>feature<span class="token operator">=</span><span class="token punctuation">{</span>
+<span class="token string">"y"</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Feature<span class="token punctuation">(</span>int64_list<span class="token operator">=</span>tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Int64List<span class="token punctuation">(</span>value<span class="token operator">=</span><span class="token punctuation">[</span>y<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token string">'x'</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Feature<span class="token punctuation">(</span>int64_list<span class="token operator">=</span>tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Int64List<span class="token punctuation">(</span>value<span class="token operator">=</span>x<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token string">'x_star'</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Feature<span class="token punctuation">(</span>float_list<span class="token operator">=</span>tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>FloatList<span class="token punctuation">(</span>value<span class="token operator">=</span>x_star<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token string">'name_star'</span><span class="token punctuation">:</span>tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Feature<span class="token punctuation">(</span>bytes_list<span class="token operator">=</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>BytesList<span class="token punctuation">(</span>value<span class="token operator">=</span> name<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>example<span class="token punctuation">.</span>SerializeToString<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+writer<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+writedata<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="Experiment"><a href="#Experiment" class="headerlink" title="Experiment"></a>Experiment</h2><ol>
+<li>sparse tensor can be used in embedding layer directly，it will ignore default value and also won’t be count into denominator when the <code>combiner</code> is mean</li>
+<li>sparse_tensor_to_dense must have corresponding type of default_value to it’s own data type ，like int,float can use 0 as default value, while tf.string has to be str,e.g. ‘0’.</li>
+<li>If you use tf.dataset.batch, and have various length data, then you should use parse_example instead of parse_single_example</li>
+<li>tf.pad can also pad outer dimension, which means increase a layer of zero outside your data</li>
+</ol>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf 
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+
+<span class="token keyword">def</span> <span class="token function">my_input_fn</span><span class="token punctuation">(</span>file_path<span class="token punctuation">,</span> perform_shuffle<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> repeat_count<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+<span class="token keyword">def</span> <span class="token function">parse</span><span class="token punctuation">(</span>example_proto<span class="token punctuation">)</span><span class="token punctuation">:</span>
+features <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"x"</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>VarLenFeature<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>int64<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token string">"x_star"</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>VarLenFeature<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token string">'name_star'</span><span class="token punctuation">:</span>tf<span class="token punctuation">.</span>VarLenFeature<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>string<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token string">"y"</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>FixedLenFeature<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> tf<span class="token punctuation">.</span>int64<span class="token punctuation">)</span><span class="token punctuation">}</span>
+parsed_features <span class="token operator">=</span> tf<span class="token punctuation">.</span>parse_example<span class="token punctuation">(</span>example_proto<span class="token punctuation">,</span> features<span class="token punctuation">)</span>
+x <span class="token operator">=</span> tf<span class="token punctuation">.</span>sparse_tensor_to_dense<span class="token punctuation">(</span>parsed_features<span class="token punctuation">[</span><span class="token string">"x"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+x <span class="token operator">=</span> tf<span class="token punctuation">.</span>cast<span class="token punctuation">(</span>x<span class="token punctuation">,</span> tf<span class="token punctuation">.</span>int32<span class="token punctuation">)</span>
+
+parsed_features<span class="token punctuation">[</span><span class="token string">'x'</span><span class="token punctuation">]</span> <span class="token operator">=</span> x
+parsed_features<span class="token punctuation">[</span><span class="token string">'x_star'</span><span class="token punctuation">]</span> <span class="token operator">=</span> tf<span class="token punctuation">.</span>sparse_tensor_to_dense<span class="token punctuation">(</span>parsed_features<span class="token punctuation">[</span><span class="token string">"x_star"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+parsed_features<span class="token punctuation">[</span><span class="token string">'name_star'</span><span class="token punctuation">]</span> <span class="token operator">=</span> tf<span class="token punctuation">.</span>sparse_tensor_to_dense<span class="token punctuation">(</span>parsed_features<span class="token punctuation">[</span><span class="token string">"name_star"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> default_value<span class="token operator">=</span> <span class="token string">'0'</span><span class="token punctuation">)</span>
+
+y <span class="token operator">=</span> tf<span class="token punctuation">.</span>cast<span class="token punctuation">(</span>parsed_features<span class="token punctuation">[</span><span class="token string">"y"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> tf<span class="token punctuation">.</span>int32<span class="token punctuation">)</span>
+<span class="token keyword">return</span> parsed_features<span class="token punctuation">,</span> y
+
+
+dataset <span class="token operator">=</span> tf<span class="token punctuation">.</span>data<span class="token punctuation">.</span>TFRecordDataset<span class="token punctuation">(</span>file_path<span class="token punctuation">)</span><span class="token punctuation">.</span>batch<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+dataset<span class="token operator">=</span> dataset<span class="token punctuation">.</span>map<span class="token punctuation">(</span>parse<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">#dataset = (tf.data.TFRecordDataset(file_path).batch(2).map(parse))</span>
+<span class="token keyword">if</span> perform_shuffle<span class="token punctuation">:</span>
+dataset <span class="token operator">=</span> dataset<span class="token punctuation">.</span>shuffle<span class="token punctuation">(</span>buffer_size<span class="token operator">=</span><span class="token number">256</span><span class="token punctuation">)</span>
+dataset <span class="token operator">=</span> dataset<span class="token punctuation">.</span>repeat<span class="token punctuation">(</span>repeat_count<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#dataset = dataset.padded_batch(2, padded_shapes=({'x':[6]},[1]))  #batch size为2，并且x按maxlen=6来做padding</span>
+<span class="token comment" spellcheck="true">#dataset = dataset.padded_batch(2, padded_shapes=dataset.output_shapes)  #batch size为2，并且x按maxlen=6来做padding</span>
+
+iterator <span class="token operator">=</span> dataset<span class="token punctuation">.</span>make_one_shot_iterator<span class="token punctuation">(</span><span class="token punctuation">)</span>
+batch_features<span class="token punctuation">,</span> batch_labels <span class="token operator">=</span> iterator<span class="token punctuation">.</span>get_next<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">return</span> batch_features<span class="token punctuation">,</span> batch_labels
+
+next_batch <span class="token operator">=</span> my_input_fn<span class="token punctuation">(</span><span class="token string">'train.tfrecords'</span><span class="token punctuation">,</span> <span class="token boolean">True</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true">##test embedding </span>
+feat_columns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>       <span class="token comment" spellcheck="true">#feat_columns must be iterable datatype </span>
+feat_columns<span class="token punctuation">.</span>append<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>numeric_column<span class="token punctuation">(</span><span class="token string">'x'</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">)</span>       <span class="token comment" spellcheck="true">#0</span>
+feat_columns<span class="token punctuation">.</span>append<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>numeric_column<span class="token punctuation">(</span><span class="token string">'x_star'</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>   <span class="token comment" spellcheck="true">#1</span>
+
+
+embed_info <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_vocabulary_list<span class="token punctuation">(</span>
+<span class="token string">'name_star'</span><span class="token punctuation">,</span>
+<span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">,</span><span class="token string">'b'</span><span class="token punctuation">,</span><span class="token string">'c'</span><span class="token punctuation">,</span><span class="token string">'d'</span><span class="token punctuation">,</span><span class="token string">'e'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> default_value<span class="token operator">=</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span>
+dtype<span class="token operator">=</span>tf<span class="token punctuation">.</span>string<span class="token punctuation">,</span> num_oov_buckets<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span>
+
+name_tensor<span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>embedding_column<span class="token punctuation">(</span>embed_info<span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> combiner<span class="token operator">=</span><span class="token string">'mean'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">#feat_columns.append(tf.feature_column.shared_embedding_columns([embed_info], dimension =32)[0])</span>
+<span class="token comment" spellcheck="true">#feat_columns.append(tf.feature_column.embedding_column(embed_info, dimension =32))      #2</span>
+</code></pre>
+<pre class=" language-python"><code class="language-python">op<span class="token operator">=</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>input_layer<span class="token punctuation">(</span>next_batch<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>feature_columns<span class="token operator">=</span>name_tensor<span class="token punctuation">)</span>
+<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
+<span class="token comment" spellcheck="true">#sess.run(init)</span>
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>tables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token punctuation">[</span>op<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+xs<span class="token punctuation">,</span> y <span class="token operator">=</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>next_batch<span class="token punctuation">)</span>        
+<span class="token comment" spellcheck="true">#print(sess.run([tf.feature_column.input_layer(xs,feature_columns=[name_tensor])]))</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>size<span class="token punctuation">(</span>xs<span class="token punctuation">[</span><span class="token string">'x'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 2*4  batch_size 2</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'x: '</span><span class="token punctuation">,</span> xs<span class="token punctuation">[</span><span class="token string">'x'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'x_star: '</span><span class="token punctuation">,</span> xs<span class="token punctuation">[</span><span class="token string">'x_star'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'y:'</span><span class="token punctuation">,</span> y<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'testing pad for lstm'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#print(sess.run(tf.pad(xs['x'],tf.constant([[0,0],[0,0]], dtype=tf.int32))))</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'testing feature columns for lstm'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#print(sess.run(tf.feature_column.input_layer(xs,feature_columns=feat_columns[0])))</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'testing string feature columns'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>xs<span class="token punctuation">[</span><span class="token string">'name_star'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#print(feat_columns[2])</span>
+<span class="token comment" spellcheck="true">#print(sess.run([op]))</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span>xs<span class="token punctuation">[</span><span class="token string">'x'</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>xs<span class="token punctuation">[</span><span class="token string">'x'</span><span class="token punctuation">]</span><span class="token punctuation">[</span>range<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>y<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>size<span class="token punctuation">(</span>y<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<p>[array([[ 0.29952478, -0.02905731, -0.14833574, -0.25489837,  0.13668409],<br>[ 0.36393905, -0.18847883,  0.01317748,  0.02921137, -0.3228819 ],<br>[ 0.20875314, -0.471264  , -0.23475473, -0.10564104, -0.1293019 ]],<br>dtype=float32)]<br>12<br>x:  [[ 1  2  3  0]<br>[ 4  5  6  8]<br>[23  1  0  0]]<br>x_star:  [[15.  25.   0. ]<br>[23.1  0.   0. ]<br>[ 1.   2.   3. ]]<br>y: [[1]<br>[2]<br>[3]]<br>testing pad for lstm<br>testing feature columns for lstm<br>testing string feature columns<br>[[b’a’ b’b’]<br>[b’a’ b’0’]<br>[b’b’ b’0’]]<br>[4 5 6 8]<br>[2 6]</p>
+<p><class 'numpy.ndarray'=""><br>3</class></p>
+<h1 id="Tensorflow-LSTM-CELL"><a href="#Tensorflow-LSTM-CELL" class="headerlink" title="Tensorflow LSTM CELL"></a>Tensorflow LSTM CELL</h1><h2 id="Single-cell-case"><a href="#Single-cell-case" class="headerlink" title="Single cell case"></a>Single cell case</h2><p>test the output of LSTM cell</p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> tensorflow<span class="token punctuation">.</span>contrib <span class="token keyword">import</span> rnn
+tf<span class="token punctuation">.</span>reset_default_graph<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Create input data</span>
+X <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># The second example is of length 6 </span>
+X<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>   <span class="token comment" spellcheck="true"># 2D: include all third dimension</span>
+X_lengths <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">]</span>
+
+cell <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>rnn_cell<span class="token punctuation">.</span>LSTMCell<span class="token punctuation">(</span>num_units<span class="token operator">=</span><span class="token number">64</span><span class="token punctuation">,</span> state_is_tuple<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+init_state <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">64</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">#batch_size * hidden_state_size</span>
+init_s <span class="token operator">=</span>  tf<span class="token punctuation">.</span>contrib<span class="token punctuation">.</span>rnn<span class="token punctuation">.</span>LSTMStateTuple<span class="token punctuation">(</span>c<span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>init_state<span class="token punctuation">)</span><span class="token punctuation">,</span> h<span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>init_state<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+outputs<span class="token punctuation">,</span> states  <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>dynamic_rnn<span class="token punctuation">(</span>cell<span class="token operator">=</span>cell<span class="token punctuation">,</span>
+dtype<span class="token operator">=</span>tf<span class="token punctuation">.</span>float64<span class="token punctuation">,</span>
+initial_state <span class="token operator">=</span> init_s<span class="token punctuation">,</span>
+sequence_length<span class="token operator">=</span>X_lengths<span class="token punctuation">,</span>
+inputs<span class="token operator">=</span>X<span class="token punctuation">)</span>
+
+
+<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+output_val<span class="token punctuation">,</span> state_val <span class="token operator">=</span> sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token punctuation">[</span>outputs<span class="token punctuation">,</span> states<span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>output_val<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>state_val<span class="token punctuation">.</span>c<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+
+
+
+
+<span class="token keyword">assert</span> outputs<span class="token punctuation">.</span>shape <span class="token operator">==</span> <span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">64</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># the final outputs state and states returned must be equal for each      </span>
+<span class="token comment" spellcheck="true"># sequence</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>outputs<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true">#all ten outputs of two samples</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>states<span class="token punctuation">)</span>   <span class="token comment" spellcheck="true">#cell states and hidden units: all two sequence state output of two trajectory</span>
+</code></pre>
+<p>(2, 10, 64)<br>(2, 64)<br>Tensor(“rnn/transpose_1:0”, shape=(2, 10, 64), dtype=float64)<br>LSTMStateTuple(c=<tf.tensor 'rnn="" while="" exit_3:0'="" shape="(2," 64)="" dtype="float64">, h=<tf.tensor 'rnn="" while="" exit_4:0'="" shape="(2," 64)="" dtype="float64">)</tf.tensor></tf.tensor></p>
+<h2 id="Multicell-case"><a href="#Multicell-case" class="headerlink" title="Multicell case"></a>Multicell case</h2><pre class=" language-python"><code class="language-python">tf<span class="token punctuation">.</span>reset_default_graph<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">#cell = tf.nn.rnn_cell.LSTMCell(num_units=64, state_is_tuple=True)</span>
+multi_cell <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>rnn_cell<span class="token punctuation">.</span>MultiRNNCell<span class="token punctuation">(</span><span class="token punctuation">[</span>tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>rnn_cell<span class="token punctuation">.</span>LSTMCell<span class="token punctuation">(</span>num_units<span class="token operator">=</span><span class="token number">64</span><span class="token punctuation">,</span> state_is_tuple<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">,</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>rnn_cell<span class="token punctuation">.</span>LSTMCell<span class="token punctuation">(</span>num_units<span class="token operator">=</span><span class="token number">64</span><span class="token punctuation">,</span> state_is_tuple<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+init_state <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">64</span><span class="token punctuation">)</span>
+init_s <span class="token operator">=</span>  tf<span class="token punctuation">.</span>contrib<span class="token punctuation">.</span>rnn<span class="token punctuation">.</span>LSTMStateTuple<span class="token punctuation">(</span>c<span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>init_state<span class="token punctuation">)</span><span class="token punctuation">,</span> h<span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>init_state<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+outputs<span class="token punctuation">,</span> states  <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>dynamic_rnn<span class="token punctuation">(</span>cell<span class="token operator">=</span>multi_cell<span class="token punctuation">,</span>
+dtype<span class="token operator">=</span>tf<span class="token punctuation">.</span>float64<span class="token punctuation">,</span>
+initial_state <span class="token operator">=</span> <span class="token punctuation">(</span>init_s<span class="token punctuation">,</span> init_s<span class="token punctuation">)</span><span class="token punctuation">,</span>
+sequence_length<span class="token operator">=</span>X_lengths<span class="token punctuation">,</span>
+inputs<span class="token operator">=</span>X<span class="token punctuation">)</span>
+
+
+<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+a<span class="token operator">=</span> sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>X<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+output_val<span class="token punctuation">,</span> state_val <span class="token operator">=</span> sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token punctuation">[</span>outputs<span class="token punctuation">,</span> states<span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>output_val<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>output_val<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Something related to StateTuple'</span><span class="token punctuation">)</span>
+</code></pre>
+<p><class 'numpy.ndarray'=""><br>(2, 9, 64)<br>Something related to StateTuple</class></p>
+<h1 id="fast-predict"><a href="#fast-predict" class="headerlink" title="fast predict"></a>fast predict</h1><h2 id="tensorflow-fast-predict"><a href="#tensorflow-fast-predict" class="headerlink" title="tensorflow fast predict"></a>tensorflow fast predict</h2><p>use generator to keep .predict open</p>
+<p>Why you need this? Detailed explanation <a href="https://stackoverflow.com/questions/51403540/tensorflow-estimator-predict-without-loading-from-checkpoint-everytime" target="_blank" rel="external">here</a></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf
+
+<span class="token keyword">class</span> <span class="token class-name">FastPredict</span><span class="token punctuation">:</span>
+
+<span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> estimator<span class="token punctuation">,</span> input_fn<span class="token punctuation">)</span><span class="token punctuation">:</span>
+self<span class="token punctuation">.</span>estimator <span class="token operator">=</span> estimator
+self<span class="token punctuation">.</span>first_run <span class="token operator">=</span> <span class="token boolean">True</span>
+self<span class="token punctuation">.</span>closed <span class="token operator">=</span> <span class="token boolean">False</span>
+self<span class="token punctuation">.</span>input_fn <span class="token operator">=</span> input_fn
+
+<span class="token keyword">def</span> <span class="token function">_create_generator</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+<span class="token keyword">while</span> <span class="token operator">not</span> self<span class="token punctuation">.</span>closed<span class="token punctuation">:</span>
+<span class="token keyword">yield</span> self<span class="token punctuation">.</span>next_features
+
+<span class="token keyword">def</span> <span class="token function">predict</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> feature_batch<span class="token punctuation">)</span><span class="token punctuation">:</span>
+<span class="token triple-quoted-string string">""" Runs a prediction on a set of features. Calling multiple times
+does *not* regenerate the graph which makes predict much faster.
+feature_batch a list of list of features. IMPORTANT: If you're only classifying 1 thing,
+you still need to make it a batch of 1 by wrapping it in a list (i.e. predict([my_feature]), not predict(my_feature) 
+"""</span>
+self<span class="token punctuation">.</span>next_features <span class="token operator">=</span> feature_batch
+<span class="token keyword">if</span> self<span class="token punctuation">.</span>first_run<span class="token punctuation">:</span>
+self<span class="token punctuation">.</span>batch_size <span class="token operator">=</span> len<span class="token punctuation">(</span>feature_batch<span class="token punctuation">)</span>
+self<span class="token punctuation">.</span>predictions <span class="token operator">=</span> self<span class="token punctuation">.</span>estimator<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>
+input_fn<span class="token operator">=</span>self<span class="token punctuation">.</span>input_fn<span class="token punctuation">(</span>self<span class="token punctuation">.</span>_create_generator<span class="token punctuation">)</span><span class="token punctuation">)</span>
+self<span class="token punctuation">.</span>first_run <span class="token operator">=</span> <span class="token boolean">False</span>
+<span class="token keyword">elif</span> self<span class="token punctuation">.</span>batch_size <span class="token operator">!=</span> len<span class="token punctuation">(</span>feature_batch<span class="token punctuation">)</span><span class="token punctuation">:</span>
+<span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string">"All batches must be of the same size. First-batch:"</span> <span class="token operator">+</span> str<span class="token punctuation">(</span>self<span class="token punctuation">.</span>batch_size<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">" This-batch:"</span> <span class="token operator">+</span> str<span class="token punctuation">(</span>len<span class="token punctuation">(</span>feature_batch<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+results <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>self<span class="token punctuation">.</span>batch_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+results<span class="token punctuation">.</span>append<span class="token punctuation">(</span>next<span class="token punctuation">(</span>self<span class="token punctuation">.</span>predictions<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">return</span> results
+
+<span class="token keyword">def</span> <span class="token function">close</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+self<span class="token punctuation">.</span>closed <span class="token operator">=</span> <span class="token boolean">True</span>
+<span class="token keyword">try</span><span class="token punctuation">:</span>
+next<span class="token punctuation">(</span>self<span class="token punctuation">.</span>predictions<span class="token punctuation">)</span>
+<span class="token keyword">except</span><span class="token punctuation">:</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Exception in fast_predict. This is probably OK"</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">example_input_fn</span><span class="token punctuation">(</span>generator<span class="token punctuation">)</span><span class="token punctuation">:</span>
+<span class="token triple-quoted-string string">""" An example input function to pass to predict. It must take a generator as input """</span>
+
+<span class="token keyword">def</span> <span class="token function">_inner_input_fn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+dataset <span class="token operator">=</span> tf<span class="token punctuation">.</span>data<span class="token punctuation">.</span>Dataset<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>from_generator<span class="token punctuation">(</span>generator<span class="token punctuation">,</span> output_types<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'a'</span><span class="token punctuation">:</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">,</span><span class="token string">'b'</span><span class="token punctuation">:</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>batch<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+iterator <span class="token operator">=</span> dataset<span class="token punctuation">.</span>make_one_shot_iterator<span class="token punctuation">(</span><span class="token punctuation">)</span>
+features <span class="token operator">=</span> iterator<span class="token punctuation">.</span>get_next<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">return</span> features
+
+<span class="token keyword">return</span> _inner_input_fn
+</code></pre>
+<h2 id="tf-data-Dataset-from-generator"><a href="#tf-data-Dataset-from-generator" class="headerlink" title="tf.data.Dataset().from_generator"></a>tf.data.Dataset().from_generator</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">def</span> <span class="token function">_create_generator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+a <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span>
+b <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
+result <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+result<span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">]</span> <span class="token operator">=</span>  a
+result<span class="token punctuation">[</span><span class="token string">'b'</span><span class="token punctuation">]</span> <span class="token operator">=</span> b
+<span class="token keyword">yield</span> result
+
+
+gen <span class="token operator">=</span> _create_generator<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+dataset <span class="token operator">=</span> tf<span class="token punctuation">.</span>data<span class="token punctuation">.</span>Dataset<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>from_generator<span class="token punctuation">(</span>_create_generator<span class="token punctuation">,</span>
+output_shapes<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'a'</span><span class="token punctuation">:</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span><span class="token string">'b'</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+output_types <span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'a'</span><span class="token punctuation">:</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">,</span> <span class="token string">'b'</span><span class="token punctuation">:</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>batch<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+iterator <span class="token operator">=</span> dataset<span class="token punctuation">.</span>make_one_shot_iterator<span class="token punctuation">(</span><span class="token punctuation">)</span>
+features <span class="token operator">=</span> iterator<span class="token punctuation">.</span>get_next<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+init <span class="token operator">=</span> tf<span class="token punctuation">.</span>initialize_all_variables<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>init<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>features<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<p>WARNING:tensorflow:From /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/tensorflow/python/util/tf_should_use.py:118: initialize_all_variables (from tensorflow.python.ops.variables) is deprecated and will be removed after 2017-03-02.<br>Instructions for updating:<br>Use <code>tf.global_variables_initializer</code> instead.<br>{‘a’: array([[[ 0.6078665 ,  0.7673362 ],<br>[-1.095272  , -0.44154257],<br>[ 0.24826635,  1.8101764 ]]], dtype=float32), ‘b’: array([[-1.3138337 ,  0.05587422]], dtype=float32)}</p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">def</span> <span class="token function">_create_generator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+a <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span>
+b <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
+result <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+result<span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">]</span> <span class="token operator">=</span> tf<span class="token punctuation">.</span>contrib<span class="token punctuation">.</span>rnn<span class="token punctuation">.</span>LSTMStateTuple<span class="token punctuation">(</span>c<span class="token operator">=</span>a<span class="token punctuation">,</span> h<span class="token operator">=</span>b<span class="token punctuation">)</span>
+<span class="token keyword">yield</span> result
+
+
+gen <span class="token operator">=</span> _create_generator<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+dataset <span class="token operator">=</span> tf<span class="token punctuation">.</span>data<span class="token punctuation">.</span>Dataset<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>from_generator<span class="token punctuation">(</span>_create_generator<span class="token punctuation">,</span>
+output_types <span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'a'</span><span class="token punctuation">:</span>tf<span class="token punctuation">.</span>contrib<span class="token punctuation">.</span>rnn<span class="token punctuation">.</span>LSTMStateTuple<span class="token punctuation">(</span>c<span class="token operator">=</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">,</span> h<span class="token operator">=</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>batch<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+
+iterator <span class="token operator">=</span> dataset<span class="token punctuation">.</span>make_one_shot_iterator<span class="token punctuation">(</span><span class="token punctuation">)</span>
+features <span class="token operator">=</span> iterator<span class="token punctuation">.</span>get_next<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+init <span class="token operator">=</span> tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>init<span class="token punctuation">)</span>
+g <span class="token operator">=</span> sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>features<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>g<span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+</code></pre>
+<p>LSTMStateTuple(c=array([[[ 0.15593866, -1.1535455 ],<br>[ 0.8337963 ,  0.3000586 ],<br>[ 1.3395942 , -0.65611506]]], dtype=float32), h=array([[ 0.5950521 , -0.82992613]], dtype=float32))</p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> os
+<span class="token keyword">print</span><span class="token punctuation">(</span>os<span class="token punctuation">.</span>environ<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'CONFIG'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<p>None</p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf
+hparams <span class="token operator">=</span> tf<span class="token punctuation">.</span>contrib<span class="token punctuation">.</span>training<span class="token punctuation">.</span>HParams<span class="token punctuation">(</span>
+learning_rate<span class="token operator">=</span><span class="token number">0.1</span><span class="token punctuation">,</span> num_hidden_units<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> activation<span class="token operator">=</span><span class="token string">'relu'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>hparams<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'learning_rate2'</span><span class="token punctuation">,</span> None<span class="token punctuation">)</span><span class="token punctuation">)</span>
+hparams<span class="token punctuation">.</span>add_hparam<span class="token punctuation">(</span><span class="token string">'test2'</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#None > 2   # can't compare None with 2</span>
+</code></pre>
+<p>None</p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> configparser <span class="token keyword">as</span> cp
+target <span class="token operator">=</span> cp<span class="token punctuation">.</span>ConfigParser<span class="token punctuation">(</span><span class="token punctuation">)</span>
+config <span class="token operator">=</span> target<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token string">'single.ini'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">#use config to get variours params</span>
+</code></pre>
+<h1 id="test-shared-embedding"><a href="#test-shared-embedding" class="headerlink" title="test shared embedding"></a>test shared embedding</h1><h3 id="1-How-to-use-embedding"><a href="#1-How-to-use-embedding" class="headerlink" title="1. How to use embedding"></a>1. How to use embedding</h3><p>tf.feature_column.input_layer(.., ..)</p>
+<h3 id="2-How-tf-Varlen-react-when-read-in-batch"><a href="#2-How-tf-Varlen-react-when-read-in-batch" class="headerlink" title="2. How tf.Varlen react when read in batch"></a>2. How tf.Varlen react when read in batch</h3><p>data is in format tf.SparseTensor</p>
+<h3 id="embedding-make-parse-example-spec"><a href="#embedding-make-parse-example-spec" class="headerlink" title="embedding:  make_parse_example_spec"></a>embedding:  make_parse_example_spec</h3><p>it is <code>tf.Varlen</code> because embedding can be multiple dimension, and then you can <code>combine</code> them by sum, mean, etc.</p>
+<pre class=" language-python"><code class="language-python">fc <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_hash_bucket<span class="token punctuation">(</span><span class="token string">'my_fc'</span><span class="token punctuation">,</span>
+<span class="token number">10</span><span class="token punctuation">)</span>
+
+shared_columns <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>shared_embedding_columns<span class="token punctuation">(</span><span class="token punctuation">[</span>fc<span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token number">32</span><span class="token punctuation">,</span> combiner<span class="token operator">=</span><span class="token string">'sum'</span><span class="token punctuation">,</span>
+shared_embedding_collection_name<span class="token operator">=</span><span class="token string">'my_em_fc'</span><span class="token punctuation">)</span>
+tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span>shared_columns<span class="token punctuation">)</span>
+</code></pre>
+<p>{‘my_fc’: VarLenFeature(dtype=tf.string)}</p>
+<pre class=" language-python"><code class="language-python">fc <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_vocabulary_file<span class="token punctuation">(</span><span class="token string">'my_fc'</span><span class="token punctuation">,</span>vocabulary_file<span class="token operator">=</span><span class="token string">'abc'</span><span class="token punctuation">,</span>vocabulary_size<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> 
+num_oov_buckets<span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">)</span>
+
+shared_columns <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>shared_embedding_columns<span class="token punctuation">(</span><span class="token punctuation">[</span>fc<span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token number">32</span><span class="token punctuation">,</span> combiner<span class="token operator">=</span><span class="token string">'sum'</span><span class="token punctuation">,</span>
+shared_embedding_collection_name<span class="token operator">=</span><span class="token string">'my_em_fc'</span><span class="token punctuation">)</span>
+tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span>shared_columns<span class="token punctuation">)</span>
+</code></pre>
+<p>{‘my_fc’: VarLenFeature(dtype=tf.string)}</p>
+<h2 id="check-tf-varlen"><a href="#check-tf-varlen" class="headerlink" title="check tf.varlen"></a>check tf.varlen</h2><pre class=" language-python"><code class="language-python">fc <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_vocabulary_file<span class="token punctuation">(</span><span class="token string">'my_fc'</span><span class="token punctuation">,</span>vocabulary_file<span class="token operator">=</span><span class="token string">'abc'</span><span class="token punctuation">,</span>vocabulary_size<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> 
+num_oov_buckets<span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">)</span>
+
+shared_columns <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>shared_embedding_columns<span class="token punctuation">(</span><span class="token punctuation">[</span>fc<span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token number">32</span><span class="token punctuation">,</span> combiner<span class="token operator">=</span><span class="token string">'sum'</span><span class="token punctuation">,</span>
+shared_embedding_collection_name<span class="token operator">=</span><span class="token string">'my_em_fc'</span><span class="token punctuation">,</span> <span class="token punctuation">)</span>
+target <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span>shared_columns<span class="token punctuation">)</span>     
+<span class="token keyword">for</span> key<span class="token punctuation">,</span> item <span class="token keyword">in</span> target<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>item<span class="token punctuation">)</span> <span class="token operator">==</span> tf<span class="token punctuation">.</span>VarLenFeature<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'_SharedEmbeddingColumn'</span> <span class="token keyword">in</span>  str<span class="token punctuation">(</span>type<span class="token punctuation">(</span>shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+a<span class="token operator">=</span> shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+</code></pre>
+<p>True<br>VarLenFeature(dtype=tf.string)<br>my_fc</p>
+<p><class 'tensorflow.python.feature_column.feature_column._sharedembeddingcolumn'=""><br>_SharedEmbeddingColumn(categorical_column=_VocabularyFileCategoricalColumn(key=’my_fc’, vocabulary_file=’abc’, vocabulary_size=100, num_oov_buckets=10, dtype=tf.string, default_value=-1), dimension=32, combiner=’sum’, initializer=<tensorflow.python.ops.init_ops.truncatednormal object="" at="" 0x11e6f6668="">, shared_embedding_collection_name=’my_em_fc’, ckpt_to_load_from=None, tensor_name_in_ckpt=None, max_norm=None, trainable=True)<br>True<br>my_fc_shared_embedding</tensorflow.python.ops.init_ops.truncatednormal></class></p>
+<h2 id="check-naming-of-these-method"><a href="#check-naming-of-these-method" class="headerlink" title="check naming of these method"></a>check naming of these method</h2><pre class=" language-python"><code class="language-python">fc <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_vocabulary_list<span class="token punctuation">(</span><span class="token string">'my_fc'</span><span class="token punctuation">,</span>vocabulary_list<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">,</span><span class="token string">'b'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> 
+num_oov_buckets<span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">)</span>
+
+shared_columns <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>shared_embedding_columns<span class="token punctuation">(</span><span class="token punctuation">[</span>fc<span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token number">32</span><span class="token punctuation">,</span> combiner<span class="token operator">=</span><span class="token string">'mean'</span><span class="token punctuation">,</span>
+shared_embedding_collection_name<span class="token operator">=</span><span class="token string">'my_em_fc'</span><span class="token punctuation">)</span>
+
+indicated_columns <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>indicator_column<span class="token punctuation">(</span>fc<span class="token punctuation">)</span>
+
+
+
+boundaries<span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">1.0</span><span class="token punctuation">,</span><span class="token number">2.0</span><span class="token punctuation">]</span>
+source_column <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>numeric_column<span class="token punctuation">(</span><span class="token string">'day'</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+bucketized_column <span class="token operator">=</span>  tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>bucketized_column<span class="token punctuation">(</span>source_column<span class="token punctuation">,</span>boundaries<span class="token operator">=</span>boundaries<span class="token punctuation">)</span>
+
+
+target <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span>shared_columns<span class="token punctuation">)</span>     
+<span class="token keyword">print</span><span class="token punctuation">(</span>indicated_columns<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+a<span class="token operator">=</span> shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>name<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">17</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+a<span class="token punctuation">.</span>dimension
+a<span class="token punctuation">.</span>combiner <span class="token operator">==</span> <span class="token string">'mean'</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>target<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'target keys'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>list<span class="token punctuation">(</span>target<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">#change datatype to list to support indexing</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>source_column<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>bucketized_column<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span>indicated_columns<span class="token punctuation">)</span><span class="token punctuation">)</span>     
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span><span class="token punctuation">[</span>source_column<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>     
+<span class="token keyword">print</span><span class="token punctuation">(</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span><span class="token punctuation">[</span>bucketized_column<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>     
+target<span class="token punctuation">[</span><span class="token string">'my_fc'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>dtype<span class="token operator">==</span>tf<span class="token punctuation">.</span>string
+</code></pre>
+<p>my_fc_indicator<br>my_fc<br>_SharedEmbeddingColumn(categorical_column=_VocabularyListCategoricalColumn(key=’my_fc’, vocabulary_list=(‘a’, ‘b’), dtype=tf.string, default_value=-1, num_oov_buckets=10), dimension=32, combiner=’mean’, initializer=<tensorflow.python.ops.init_ops.truncatednormal object="" at="" 0x11e6f3668="">, shared_embedding_collection_name=’my_em_fc’, ckpt_to_load_from=None, tensor_name_in_ckpt=None, max_norm=None, trainable=True)<br>{‘my_fc’: VarLenFeature(dtype=tf.string)}<br>target keys<br>my_fc<br>day<br>day_bucketized<br>{‘my_fc’: VarLenFeature(dtype=tf.string)}<br>{‘day’: FixedLenFeature(shape=(2,), dtype=tf.float32, default_value=None)}<br>{‘day’: FixedLenFeature(shape=(2,), dtype=tf.float32, default_value=None)}<br>True</tensorflow.python.ops.init_ops.truncatednormal></p>
+<h2 id="embedding-input-layer"><a href="#embedding-input-layer" class="headerlink" title="embedding - input_layer"></a>embedding - input_layer</h2><p>embedding layer should be defined before you <code>tf.initialize</code>. Because in most cases is also a trainable layer.</p>
+<pre class=" language-python"><code class="language-python">target <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+target<span class="token punctuation">[</span><span class="token string">'name_star'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span>b<span class="token string">'a'</span><span class="token punctuation">,</span>b<span class="token string">'b'</span><span class="token punctuation">,</span>b<span class="token string">''</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span>b<span class="token string">'a'</span><span class="token punctuation">,</span>b<span class="token string">'c'</span><span class="token punctuation">,</span>b<span class="token string">'d'</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+
+embed_info <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_vocabulary_list<span class="token punctuation">(</span>
+<span class="token string">'name_star'</span><span class="token punctuation">,</span>
+<span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">,</span><span class="token string">'b'</span><span class="token punctuation">,</span><span class="token string">'c'</span><span class="token punctuation">,</span><span class="token string">'d'</span><span class="token punctuation">,</span><span class="token string">'e'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> default_value<span class="token operator">=</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span>
+dtype<span class="token operator">=</span>tf<span class="token punctuation">.</span>string<span class="token punctuation">,</span> num_oov_buckets<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span>
+
+name_tensor<span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>embedding_column<span class="token punctuation">(</span>embed_info<span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">)</span>
+
+op <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>input_layer<span class="token punctuation">(</span>target<span class="token punctuation">,</span>feature_columns<span class="token operator">=</span>name_tensor<span class="token punctuation">)</span>
+
+
+<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>tables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token punctuation">[</span>op<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h1 id="Miscellany"><a href="#Miscellany" class="headerlink" title="Miscellany"></a>Miscellany</h1><h2 id="tf-gather-nd"><a href="#tf-gather-nd" class="headerlink" title="tf.gather_nd"></a>tf.gather_nd</h2><pre class=" language-python"><code class="language-python">a<span class="token operator">=</span>  np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+b <span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+
+index <span class="token operator">=</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span>b<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
+
+
+init <span class="token operator">=</span> tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>init<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>gather_nd<span class="token punctuation">(</span>b<span class="token punctuation">,</span> index<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>b<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="tf-less-tf-where"><a href="#tf-less-tf-where" class="headerlink" title="tf.less + tf.where"></a>tf.less + tf.where</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+a<span class="token operator">=</span>  np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+b <span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+
+result <span class="token operator">=</span>tf<span class="token punctuation">.</span>where<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>less<span class="token punctuation">(</span>b<span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span>tf<span class="token punctuation">.</span>ones_like<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">,</span> tf<span class="token punctuation">.</span>zeros_like<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+init <span class="token operator">=</span> tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
+sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>init<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="Tensor-computation"><a href="#Tensor-computation" class="headerlink" title="Tensor computation"></a>Tensor computation</h2><pre class=" language-python"><code class="language-python">a <span class="token operator">=</span> tf<span class="token punctuation">.</span>constant<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">7</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+b <span class="token operator">=</span> tf<span class="token punctuation">.</span>constant<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>a<span class="token operator">/</span>tf<span class="token punctuation">.</span>expand_dims<span class="token punctuation">(</span>b<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="Tensor-reshape"><a href="#Tensor-reshape" class="headerlink" title="Tensor reshape"></a>Tensor reshape</h2><p>确认rehsape逻辑，[batch_size, max_len, feature_dim]</p>
+<pre class=" language-python"><code class="language-python">a <span class="token operator">=</span> tf<span class="token punctuation">.</span>constant<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">7</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>a<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="import-py-from-parent-directory"><a href="#import-py-from-parent-directory" class="headerlink" title="import .py from parent directory"></a>import .py from parent directory</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> os<span class="token punctuation">,</span> sys
+
+sys<span class="token punctuation">.</span>path<span class="token punctuation">.</span>append<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>dirname<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>dirname<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>abspath<span class="token punctuation">(</span>__file__<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/02/10/Deep-Residual-Learning-For-Image-Recognition/" rel="next" title="Deep Residual Learning For Image Recognition">
+                <i class="fa fa-chevron-left"></i> Deep Residual Learning For Image Recognition
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="Haonan Li" />
+          <p class="site-author-name" itemprop="name">Haonan Li</p>
+          <p class="site-description motion-element" itemprop="description">Strong Mind = Success</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Background"><span class="nav-number">1.</span> <span class="nav-text">Background</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Some-complaints"><span class="nav-number">2.</span> <span class="nav-text">Some complaints</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#What’s-exactly-in-this-blog"><span class="nav-number">3.</span> <span class="nav-text">What’s exactly in this blog</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Who-should-read-this-blog"><span class="nav-number">4.</span> <span class="nav-text">Who should read this blog</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#data-input-process"><span class="nav-number"></span> <span class="nav-text">data input process</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tfrecord-saving-reading"><span class="nav-number">1.</span> <span class="nav-text">tfrecord saving, reading</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Experiment"><span class="nav-number">2.</span> <span class="nav-text">Experiment</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Tensorflow-LSTM-CELL"><span class="nav-number"></span> <span class="nav-text">Tensorflow LSTM CELL</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Single-cell-case"><span class="nav-number">1.</span> <span class="nav-text">Single cell case</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Multicell-case"><span class="nav-number">2.</span> <span class="nav-text">Multicell case</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#fast-predict"><span class="nav-number"></span> <span class="nav-text">fast predict</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tensorflow-fast-predict"><span class="nav-number">1.</span> <span class="nav-text">tensorflow fast predict</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tf-data-Dataset-from-generator"><span class="nav-number">2.</span> <span class="nav-text">tf.data.Dataset().from_generator</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#test-shared-embedding"><span class="nav-number"></span> <span class="nav-text">test shared embedding</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-How-to-use-embedding"><span class="nav-number">0.1.</span> <span class="nav-text">1. How to use embedding</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-How-tf-Varlen-react-when-read-in-batch"><span class="nav-number">0.2.</span> <span class="nav-text">2. How tf.Varlen react when read in batch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#embedding-make-parse-example-spec"><span class="nav-number">0.3.</span> <span class="nav-text">embedding:  make_parse_example_spec</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#check-tf-varlen"><span class="nav-number">1.</span> <span class="nav-text">check tf.varlen</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#check-naming-of-these-method"><span class="nav-number">2.</span> <span class="nav-text">check naming of these method</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#embedding-input-layer"><span class="nav-number">3.</span> <span class="nav-text">embedding - input_layer</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Miscellany"><span class="nav-number"></span> <span class="nav-text">Miscellany</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tf-gather-nd"><span class="nav-number">1.</span> <span class="nav-text">tf.gather_nd</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tf-less-tf-where"><span class="nav-number">2.</span> <span class="nav-text">tf.less + tf.where</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tensor-computation"><span class="nav-number">3.</span> <span class="nav-text">Tensor computation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tensor-reshape"><span class="nav-number">4.</span> <span class="nav-text">Tensor reshape</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#import-py-from-parent-directory"><span class="nav-number">5.</span> <span class="nav-text">import .py from parent directory</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Haonan Li</span>
+</div>
+
+<!-- <div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+-->
+
+        
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i># of visitors<span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i>Overall Views<span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+  <a href="https://github.com/FDSMlhn"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/567c3a48d796e2fc06ea80409cc9dd82bf714434/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_darkblue_121621.png"></a>
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'haonanli';
+      var disqus_identifier = '2018/08/13/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/';
+      var disqus_title = "Advanced Tensorflow Usage and Experiment: from input_fn to modelling part";
+      var disqus_url = 'http://yoursite.com/2018/08/13/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+  
+  
+
+  
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+  </script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+    });
+  </script>
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
