@@ -1,71 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-
-    
   <url>
     <loc>http://fdsmlhn.github.io/2018/08/12/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/</loc>
-    <lastmod>2018-08-12T12:42:12.697Z</lastmod>
-    <data>
-        <display>
-        <title>Advanced Tensorflow Usage and Experiment: from input_fn to modelling part</title>
-        <pubTime>2018-08-13T03:33:44.000Z</pubTime>
-        
-         
-           
-        </display>
-    </data>
-    </url>
-
-    
-  <url>
+    <lastmod>2018-08-12</lastmod>
+  </url>  <url>
     <loc>http://fdsmlhn.github.io/2017/10/22/Derivation%20of%20Back%20Propagation%20Through%20Time%20(BPTT)%20-%20Vanilla%20Recurrent%20Neural%20Network(RNN)/</loc>
-    <lastmod>2018-02-10T03:56:01.691Z</lastmod>
-    <data>
-        <display>
-        <title>Derivation of Back Propagation Through Time (BPTT) - Vanilla Recurrent Neural Network(RNN)</title>
-        <pubTime>2017-10-22T07:00:00.000Z</pubTime>
-        
-        <tag>hexo</tag>
-         
-         
-           
-        </display>
-    </data>
-    </url>
-
-    
-  <url>
+    <lastmod>2018-02-10</lastmod>
+  </url>  <url>
     <loc>http://fdsmlhn.github.io/2018/02/09/Deep-Residual-Learning-For-Image-Recognition/</loc>
-    <lastmod>2018-02-10T03:55:16.652Z</lastmod>
-    <data>
-        <display>
-        <title>Deep Residual Learning For Image Recognition</title>
-        <pubTime>2018-02-10T02:28:09.000Z</pubTime>
-        
-        <tag>-hexo</tag>
-         
-         
-           
-        </display>
-    </data>
-    </url>
-
-    
-  <url>
+    <lastmod>2018-02-10</lastmod>
+  </url>  <url>
     <loc>http://fdsmlhn.github.io/2017/11/02/Understanding%20im2col%20implementation%20in%20Python(numpy%20fancy%20indexing)/</loc>
-    <lastmod>2017-11-04T19:20:41.000Z</lastmod>
-    <data>
-        <display>
-        <title>Understanding im2col implementation in Python(numpy fancy indexing)</title>
-        <pubTime>2017-11-02T07:00:00.000Z</pubTime>
-        
-        <tag>hexo</tag>
-         
-         
-           
-        </display>
-    </data>
-    </url>
-
+    <lastmod>2017-11-04</lastmod>
+  </url>
 </urlset>
