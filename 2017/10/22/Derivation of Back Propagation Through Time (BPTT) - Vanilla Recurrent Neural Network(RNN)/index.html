@@ -430,54 +430,138 @@
 
       
         <hr>
-<p>During the learning of RNN, I undergone a very tough time to deduce the BPTT for vanilla RNN. There are some pieces of work online that try to explain this process(click <a href="https://github.com/go2carter/nn-learn/blob/master/grad-deriv-tex/rnn-grad-deriv.pdf" target="_blank" rel="noopener">here</a> or <a href="http://www.wildml.com/2015/10/recurrent-neural-networks-tutorial-part-3-backpropagation-through-time-and-vanishing-gradients/" target="_blank" rel="noopener">here</a>). However, I found the derivation relevant to hidden state unsatisfying. Specificly, They are mixing up the partial derivative and total derivative, which is a total disaster for beginners to understand it. So I want to write this blog to put down some tough points in the process. And meanwhile, I will also skip the parts that’s been explained thoroughly in the posts above. Hopefully, this blog will help you save a bunch of time to wrap you head around this fantastic algorithm.<br><a id="more"></a><br>The blog is generally for ones who have already known at least the setting of Neural Network and RNN. The body of this blog is going to be constructed as following:</p>
-<ol>
+<p>During the learning of RNN, I undergone a very tough time to deduce the BPTT for vanilla RNN. There are some pieces of work online that try to explain this process(click <a href="https://github.com/go2carter/nn-learn/blob/master/grad-deriv-tex/rnn-grad-deriv.pdf" target="_blank" rel="noopener">here</a> or <a href="http://www.wildml.com/2015/10/recurrent-neural-networks-tutorial-part-3-backpropagation-through-time-and-vanishing-gradients/" target="_blank" rel="noopener">here</a>). However, I found the derivation relevant to hidden state unsatisfying. Specificly, They are mixing up the partial derivative and total derivative, which is a total disaster for beginners to understand it. So I want to write this blog to put down some tough points in the process. And meanwhile, I will also skip the parts that's been explained thoroughly in the posts above. Hopefully, this blog will help you save a bunch of time to wrap you head around this fantastic algorithm. <a id="more"></a> The blog is generally for ones who have already known at least the setting of Neural Network and RNN. The body of this blog is going to be constructed as following:</p>
+<ol type="1">
 <li><strong>Math Recap: the difference between partial derivative and total derivative.</strong></li>
 <li><strong>Paritial derivative for Neural Network</strong></li>
 <li><strong>The essence of BPTT</strong></li>
 </ol>
 <hr>
-<h2 id="Math-Recap-the-difference-between-partial-derivative-and-total-derivative"><a href="#Math-Recap-the-difference-between-partial-derivative-and-total-derivative" class="headerlink" title="Math Recap: the difference between partial derivative and total derivative."></a>Math Recap: the difference between partial derivative and total derivative.</h2><p>I see a lot of people misusing these two terms and in most cases, it won’t cause any trouble. But for involved BPTT, I think it will help you understand it if we clarify it beforehand. </p>
-<p>In term of math symbols, partial derivative looks like $\frac{\partial{y}}{\partial{y}}$ and total derivative looks like $\frac{\mathrm{d}y}{\mathrm{d}x}$. The important discrepancy between them is that when we are doing partial derivative, we assume all other parts are static. They won’t change even if it won’t be the case in the real world. For example, assume $F(x)= g(x)f(x)$, $g(x)$ and $f(x)$ are both the function of $x$ and generally will change when the other one changes. If we take the total derivative of $F(x)$ to $x$, we’ve all seen formula like this: </p>
-<p>$$<br>\begin{aligned}<br>\frac{\mathrm{d}F(x)}{\mathrm{d}x} &amp;= \frac{\partial{F(x)}}{\partial{g(x)}} \frac{\mathrm{d}g(x)}{\mathrm{d}x} + \frac{\partial{F(x)}}{\partial{f(x)}} \frac{\mathrm{d}f(x)}{\mathrm{d}x} \<br>\frac{\partial{F(x)}}{\partial{g(x)}} &amp;= f(x) \<br>\frac{\partial{F(x)}}{\partial{f(x)}} &amp;= g(x)<br>\end{aligned}<br>$$ </p>
-<p>The partial derivative neglects the change of g(x) while changing f(x). If we want $\frac{\mathrm{d}F(x)}{\mathrm{d}g(x)}$, it then will depend on the relationship between function $g$ and $f$. </p>
+<h2 id="math-recap-the-difference-between-partial-derivative-and-total-derivative.">Math Recap: the difference between partial derivative and total derivative.</h2>
+<p>I see a lot of people misusing these two terms and in most cases, it won't cause any trouble. But for involved BPTT, I think it will help you understand it if we clarify it beforehand.</p>
+<p>In term of math symbols, partial derivative looks like <span class="math inline">\(\frac{\partial{y}}{\partial{y}}\)</span> and total derivative looks like <span class="math inline">\(\frac{\mathrm{d}y}{\mathrm{d}x}\)</span>. The important discrepancy between them is that when we are doing partial derivative, we assume all other parts are static. They won't change even if it won't be the case in the real world. For example, assume <span class="math inline">\(F(x)= g(x)f(x)\)</span>, <span class="math inline">\(g(x)\)</span> and <span class="math inline">\(f(x)\)</span> are both the function of <span class="math inline">\(x\)</span> and generally will change when the other one changes. If we take the total derivative of <span class="math inline">\(F(x)\)</span> to <span class="math inline">\(x\)</span>, we've all seen formula like this:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\frac{\mathrm{d}F(x)}{\mathrm{d}x} &amp;= \frac{\partial{F(x)}}{\partial{g(x)}} \frac{\mathrm{d}g(x)}{\mathrm{d}x} + \frac{\partial{F(x)}}{\partial{f(x)}} \frac{\mathrm{d}f(x)}{\mathrm{d}x} \\
+\frac{\partial{F(x)}}{\partial{g(x)}} &amp;= f(x) \\
+\frac{\partial{F(x)}}{\partial{f(x)}} &amp;= g(x)
+\end{aligned}
+\]</span></p>
+<p>The partial derivative neglects the change of g(x) while changing f(x). If we want <span class="math inline">\(\frac{\mathrm{d}F(x)}{\mathrm{d}g(x)}\)</span>, it then will depend on the relationship between function <span class="math inline">\(g\)</span> and <span class="math inline">\(f\)</span>.</p>
 <hr>
-<h2 id="Partial-derivative-for-Neural-Network"><a href="#Partial-derivative-for-Neural-Network" class="headerlink" title="Partial derivative for Neural Network"></a>Partial derivative for Neural Network</h2><p>In this part, I want to talk about the backpropagation in vanilla neural networks to enhance your understanding of partial derivatives and more importantly, to elaborate some tricks to use when we are doing the back propagation. If you already have a fully comprehension towards BP in Neural Network, feel free to skip this section.</p>
+<h2 id="partial-derivative-for-neural-network">Partial derivative for Neural Network</h2>
+<p>In this part, I want to talk about the backpropagation in vanilla neural networks to enhance your understanding of partial derivatives and more importantly, to elaborate some tricks to use when we are doing the back propagation. If you already have a fully comprehension towards BP in Neural Network, feel free to skip this section.</p>
 <p>Without the loss of generality, I will use two-layer neural network as our example(one hidden layer), the model is for a multilabel classification problem:</p>
-<p>$$<br>\begin{aligned}<br>\mathbf{z}^{(1)} &amp;= \mathbf{X}\mathbf{W_1} + \mathbf{b_1} \<br>\mathbf{a}^{(1)} &amp;= f^{(1)}(\mathbf{z}^{(1)}) \<br>\mathbf{z}^{(2)} &amp;= \mathbf{a}^{(1)}\mathbf{W_2} + \mathbf{b<em>2} \<br>\hat{\mathbf{Y}} &amp;= g(\mathbf{z}^{(2)}) \<br>Loss &amp;= \sum^{N}</em>{i=1} L(y_i, \hat{\mathbf{Y_i}})<br>\end{aligned}<br>$$</p>
-<p>The dimensions of $\mathbf{X}$, $\mathbf{W_1}$, $\mathbf{z}^{(1)}$,$\mathbf{W_2}$, $\hat{\mathbf{Y}}$ will be $(N, D)$, $(D, D_1)$, $(N, D_1)$, $(D_1, D_2)$, $(N, C)$. The superscript 1 and 2 indicates the layer, subscript i indicate the corresponding row of data.</p>
-<p>When we are trying to calculate the total derivative to the $W_1$, there will be generally two ways to do this. One formal way and one tricky way:</p>
-<h3 id="Formal-derivation"><a href="#Formal-derivation" class="headerlink" title="Formal derivation"></a>Formal derivation</h3><p>The process is straightforward, we only need to write down it as the chain rule suggests.</p>
-<p>$$<br>\frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W_1}}} =<br>\frac{\mathrm{d}{\mathbf{Z}^{(1)}}}{\mathrm{d}{\mathbf{W_1}}}<br>\frac{\partial{\mathbf{Z}^{(2)}}}{\partial{\mathbf{Z}^{(1)}}}<br>\frac{\partial{\mathbf{Y}}}{\partial{\mathbf{Z}^{(2)}}}<br>\frac{\partial{L}}{\partial{\mathbf{Y}}}<br>$$</p>
-<p>Although the product of all these things is a simple matrix. However, there are a lot of waste in the process. We have to see that the intermediate matrice are some 4 dimemsional tensors, e.g. $\frac{\mathrm{d}{\mathbf{Z}^{(1)}}}{\mathrm{d}{\mathbf{W_1}}}$ is a tensor of $(D, D_1, N, D<em>1)$ dimension. For every element $W</em>{1ij}$ among the $(D, D_1)$ elements in $W_1$. There exists a $(N, D<em>1)$ matrix of derivative of $\mathbf{Z}^{(1)}$ to $W</em>{1ij}$. And among elements $N * D_1$ of this matrix, only N elements are none zero(the ones of neuron j in layer 1, namely the column j of matrix $\mathbf{Z}^{(1)}$). So as a result, a prevailing tricky one comes into our views.</p>
-<h3 id="Tricky-derivation"><a href="#Tricky-derivation" class="headerlink" title="Tricky derivation"></a>Tricky derivation</h3><p>Instead of computing the result all in the end, we will try to decrease this problem and conquer it. For example, in the process, we will try to derive $\frac{\partial{L}}{\partial{\mathbf{Z}^{(2)}}}$ first and go on. In the Python realization, we will note this as a $\mathrm{d}\mathbf{Z}^{(2)}$, which loos like a total derivative sort of thing although it’s a partial derivative. Thus, the <strong>partial</strong> derivative will be like waterflow and easier to compute. On the stage of this, we will furthur consider every element of next matrix to which we shall take derivative, and try to summarize them into a compact matrix multiplication. Like the example we discuss in the previous method, we will try to derive $\frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W<em>1}}}$ with $\mathrm{d}\mathbf{Z}^{(2)}$. Then, we can just see what we get if we want to have $\frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W</em>{1ij}}}}$. With ease we know that it is the inner product of $\mathrm{d}\mathbf{Z}^{(2)}<em>{j}$ and $\mathbf{X}</em>{i}$, which are both shape of $(N,)$. As a result, the 4 dimensional tensor multiplication in the above will become:</p>
-<p>$$<br>\frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W_1}}} = \mathrm{X}^{T} \mathrm{d}\mathbf{Z}^{(2)}<br>$$</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbf{z}^{(1)} &amp;= \mathbf{X}\mathbf{W_1} + \mathbf{b_1} \\
+\mathbf{a}^{(1)} &amp;= f^{(1)}(\mathbf{z}^{(1)}) \\
+\mathbf{z}^{(2)} &amp;= \mathbf{a}^{(1)}\mathbf{W_2} + \mathbf{b_2} \\
+\hat{\mathbf{Y}} &amp;= g(\mathbf{z}^{(2)}) \\
+Loss &amp;= \sum^{N}_{i=1} L(y_i, \hat{\mathbf{Y_i}})
+\end{aligned}
+\]</span></p>
+<p>The dimensions of <span class="math inline">\(\mathbf{X}\)</span>, <span class="math inline">\(\mathbf{W_1}\)</span>, <span class="math inline">\(\mathbf{z}^{(1)}\)</span>,<span class="math inline">\(\mathbf{W_2}\)</span>, <span class="math inline">\(\hat{\mathbf{Y}}\)</span> will be <span class="math inline">\((N, D)\)</span>, <span class="math inline">\((D, D_1)\)</span>, <span class="math inline">\((N, D_1)\)</span>, <span class="math inline">\((D_1, D_2)\)</span>, <span class="math inline">\((N, C)\)</span>. The superscript 1 and 2 indicates the layer, subscript i indicate the corresponding row of data.</p>
+<p>When we are trying to calculate the total derivative to the <span class="math inline">\(W_1\)</span>, there will be generally two ways to do this. One formal way and one tricky way:</p>
+<h3 id="formal-derivation">Formal derivation</h3>
+<p>The process is straightforward, we only need to write down it as the chain rule suggests.</p>
+<p><span class="math display">\[
+\frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W_1}}} = 
+\frac{\mathrm{d}{\mathbf{Z}^{(1)}}}{\mathrm{d}{\mathbf{W_1}}}
+\frac{\partial{\mathbf{Z}^{(2)}}}{\partial{\mathbf{Z}^{(1)}}} 
+\frac{\partial{\mathbf{Y}}}{\partial{\mathbf{Z}^{(2)}}} 
+\frac{\partial{L}}{\partial{\mathbf{Y}}} 
+\]</span></p>
+<p>Although the product of all these things is a simple matrix. However, there are a lot of waste in the process. We have to see that the intermediate matrice are some 4 dimemsional tensors, e.g. <span class="math inline">\(\frac{\mathrm{d}{\mathbf{Z}^{(1)}}}{\mathrm{d}{\mathbf{W_1}}}\)</span> is a tensor of <span class="math inline">\((D, D_1, N, D_1)\)</span> dimension. For every element <span class="math inline">\(W_{1ij}\)</span> among the <span class="math inline">\((D, D_1)\)</span> elements in <span class="math inline">\(W_1\)</span>. There exists a <span class="math inline">\((N, D_1)\)</span> matrix of derivative of <span class="math inline">\(\mathbf{Z}^{(1)}\)</span> to <span class="math inline">\(W_{1ij}\)</span>. And among elements <span class="math inline">\(N * D_1\)</span> of this matrix, only N elements are none zero(the ones of neuron j in layer 1, namely the column j of matrix <span class="math inline">\(\mathbf{Z}^{(1)}\)</span>). So as a result, a prevailing tricky one comes into our views.</p>
+<h3 id="tricky-derivation">Tricky derivation</h3>
+<p>Instead of computing the result all in the end, we will try to decrease this problem and conquer it. For example, in the process, we will try to derive <span class="math inline">\(\frac{\partial{L}}{\partial{\mathbf{Z}^{(2)}}}\)</span> first and go on. In the Python realization, we will note this as a <span class="math inline">\(\mathrm{d}\mathbf{Z}^{(2)}\)</span>, which loos like a total derivative sort of thing although it's a partial derivative. Thus, the <strong>partial</strong> derivative will be like waterflow and easier to compute. On the stage of this, we will furthur consider every element of next matrix to which we shall take derivative, and try to summarize them into a compact matrix multiplication. Like the example we discuss in the previous method, we will try to derive <span class="math inline">\(\frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W_1}}}\)</span> with <span class="math inline">\(\mathrm{d}\mathbf{Z}^{(2)}\)</span>. Then, we can just see what we get if we want to have <span class="math inline">\(\frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W_{1ij}}}}\)</span>. With ease we know that it is the inner product of <span class="math inline">\(\mathrm{d}\mathbf{Z}^{(2)}_{j}\)</span> and <span class="math inline">\(\mathbf{X}_{i}\)</span>, which are both shape of <span class="math inline">\((N,)\)</span>. As a result, the 4 dimensional tensor multiplication in the above will become:</p>
+<p><span class="math display">\[
+\frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W_1}}} = \mathrm{X}^{T} \mathrm{d}\mathbf{Z}^{(2)}
+\]</span></p>
 <p>And of course, this tricky derivation is widely used in the algorithm for BP for NN.</p>
 <hr>
-<h2 id="The-essence-of-BPTT-in-vanilla-RNN"><a href="#The-essence-of-BPTT-in-vanilla-RNN" class="headerlink" title="The essence of BPTT in vanilla RNN"></a>The essence of BPTT in vanilla RNN</h2><p>After previous discussion, we will try to deal with this hardcore problem!</p>
-<p>First, we will describe the model and it’s parameters:</p>
-<p>$$<br>\begin{aligned}<br>\mathbf{h}^{(t)} &amp;=\tanh\left( \mathbf{b} + \mathbf{h}^{(t-1)} \mathbf{W_h} + \mathbf{x}^{(t)} \mathbf{W<em>x} \right) \<br>\mathbf{o}^{(t)} &amp;= \mathbf{c} +\mathbf{h}^{(t)} \mathbf{V} \<br>\mathbf{\hat{y}}^{(t)} &amp;= softmax\left( \mathbf{o}^{(t)} \right) \<br>\mathbf{L}^{(t)} &amp;= L(\mathbf{y}^{(t)}, \mathbf{\hat{y}}^{(t)}) \<br>L &amp;= \sum^{T}</em>{t=1} \sum^{N}<em>{i=1} L^{(t)}</em>{i}<br>\end{aligned}<br>$$</p>
-<p>Here, we also want to take input as a minibatch of N entries. The dimensions of $\mathbf{x}^{(t)}$, $\mathbf{h}^{(t-1)}$, $\mathbf{W_h}$, $\mathbf{W<em>x}$, $\mathbf{V}$, $\mathbf{L}^{(t)}$ are $(N,D)$, $(N,H)$, $(H,H)$, $(D,H)$, $(D, C)$,$(N,)$ respectively. $L^{(t)}</em>{i}$ is the $i$-th element of $\mathbf{L}^{(t)}$. The Loss function is the common cross-entropy loss.</p>
-<p>The most headache problem involve the derivative to $\mathbf{W_h}$, $\mathbf{W_x}$ and $\mathbf{b}$. Because they are in all $\mathbf{h}^{(t)}$ so the derivatives get some sort of recursive fashion. It’s quite a thorny thing to deal with. So here, we will cut directly to this part. I will put down the derivation of the derivative of $L$ to $\mathbf{W_h}$. Others will leave as exercises for you:)</p>
-<p>Goal: Find the total derivative $ \frac{\mathrm{d}L}{\mathrm{d}\mathbf{W_h}}$</p>
-<p>$$<br>\frac{\mathrm{d}L}{\mathrm{d}\mathbf{W<em>h}}= \sum^{T}</em>{t=1} \frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_h}}<br>$$</p>
-<p>Notice the $L^{(t)}$ is a scalar and it’s $\sum^{N}<em>{i=1} L^{(t)}</em>{i}$. We will just look at one of them to have a sense of how it will end up.</p>
-<p>$$<br>\frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_h}} =<br>\frac{\mathrm{d}\mathbf{h}^{(t)}}{\mathrm{d}\mathbf{W_h}}<br>\frac{\partial \mathbf{o}^{(t)}}{\partial \mathbf{h}^{(t)}}<br>\frac{\partial \mathbf{\hat{y}}^{(t)}}{\partial \mathbf{o}^{(t)}}<br>\frac{\partial L^{(t)}}{\partial \mathbf{\hat{y}}^{(t)}}<br>$$</p>
-<p>In order to use tricks like BP in the Neural network. We will compute the partial derivative in sequence. Note again the symbol $d$ is just for notation convenience and has nothing to do with <strong>total</strong> derivative.</p>
-<p>$$<br>\begin{aligned}<br>d\mathbf{o}^{(t)} &amp;= \frac{\partial L^{(t)}}{\partial \mathbf{o}^{(t)}} = \mathbf{\hat{y}}^{(t)} - \mathbf{1_{y^{(t)}}} \<br>d\mathbf{h}^{(t)} &amp;=  d\mathbf{o}^{(t)} V^{T}<br>\end{aligned}<br>$$</p>
-<p>$\mathbf{1<em>{y^{(t)}}}$ is a special matrix of same size as $\mathbf{\hat{y}}^{(t)}$. For row $i$ in $\mathbf{1</em>{y^{(t)}}}$, the $y^{(t)}_{i}$-th element is 1, others are zero. </p>
-<p>Then, we will define a intermediate matrix $\mathbf{a}^{(t)}$ to avoid the use of 4 dimensional tensor. Notice the square of $d\mathbf{h}^{(t)}$ is a element-wise square operation.</p>
-<p>$$<br>\begin{aligned}<br>\mathbf{a}^{(t)} &amp;=\mathbf{b} + \mathbf{h}^{(t-1)} \mathbf{W_h} + \mathbf{x}^{(t)} \mathbf{W_h} \<br>\mathbf{h}^{(t)} &amp;=\tanh\left( \mathbf{a}^{(t)} \right) \<br>d\mathbf{h}^{(t)} &amp;=  d\mathbf{o}^{(t)} V^{T} \<br>d\mathbf{a}^{(t)} &amp;= 1 - (d\mathbf{h}^{(t)})^2 \<br>\frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_h}} &amp;=<br>\frac{\mathrm{d}\mathbf{a}^{(t)}}{\mathrm{d}\mathbf{W_h}}<br>d\mathbf{a}^{(t)} \<br>&amp;=<br>(\frac{\mathrm{d}\mathbf{W_h}}{\mathrm{d}\mathbf{W_h}}<br>\frac{\partial \mathbf{a}^{(t)}}{\partial \mathbf{W_h}} +<br>\frac{\mathrm{d}\mathbf{h}^{(t-1)}}{\mathrm{d}\mathbf{W_h}}<br>\frac{\partial \mathbf{a}^{(t)}}{\partial \mathbf{h}^{(t-1)}} )d\mathbf{a}^{(t)}<br>\end{aligned}<br>$$</p>
-<p>For the last equation, the first part is simply. If we use the result from above. The product will simply be $ d{\mathbf{W_h}^{(t)}} =  (\mathbf{h}^{(t-1)})^T d\mathbf{a}^{(t)}$. And then we can furthur integrate the last part of the equation. At last we get:</p>
-<p>$$<br>\begin{aligned}<br>\frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_h}} &amp;= d{\mathbf{W_h}^{(t)}} +<br>\frac{\mathrm{d}\mathbf{h}^{(t-1)}}{\mathrm{d}\mathbf{W_h}}<br>d\mathbf{h}^{(t-1)} \<br>d\mathbf{h}^{(t-1)} &amp;=  d\mathbf{a}^{(t)} (\mathbf{h}^{(t-1)})^T<br>\end{aligned}<br>$$</p>
-<p>And then, we find this can be done recursively afterwards. $d\mathbf{h}^{(t-1)}$ will be passed down just like the waterflow in the BP in Neural network. At last, after rearrangement, we will have a final version like this. In order to calculate $d{\mathbf{W_h}^{(1)}}$, there should be a $\mathbf{h}^{(0)}$ as initialization value for the hidden state here.</p>
-<p>$$<br>\begin{aligned}<br>\frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W<em>x}} &amp;=<br>\sum^{t}</em>{i=1}d{\mathbf{W_h}^{(i)}}<br>\end{aligned}<br>$$</p>
-<p>In the application, when we are trying to calculate the $\frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_x}}$, for a given timestep $t=t_0 \in \left[ 1, t \right) $, we may first receive the derivative message from $t_0+1$ and then we need to pass down the derivative message. The whole process will looks like this.</p>
-<p>$$<br>\begin{aligned}<br>d\mathbf{a}^{(i)} &amp;= 1 - (d\mathbf{h}^{(i)})^2 \<br>d{\mathbf{W_h}^{(i)}} &amp;=  (\mathbf{h}^{(t-1)})^T d\mathbf{a}^{(t)} \<br>d{\mathbf{W_x}^{(i)}} &amp;= \ \dots \<br>d{\mathbf{X}^{(i)}} &amp;= \ \dots \<br>d{\mathbf{b}^{(i)}} &amp;= \ \dots \<br>d\mathbf{h}^{(i-1)} &amp;=  d\mathbf{a}^{(i)} (\mathbf{h}^{(i-1)})^T<br>\end{aligned}<br>$$</p>
-<p>And then there will be $T$ timestamps we need to compute corresponding to $T$ different $L^{(t)}$. </p>
+<h2 id="the-essence-of-bptt-in-vanilla-rnn">The essence of BPTT in vanilla RNN</h2>
+<p>After previous discussion, we will try to deal with this hardcore problem!</p>
+<p>First, we will describe the model and it's parameters:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbf{h}^{(t)} &amp;=\tanh\left( \mathbf{b} + \mathbf{h}^{(t-1)} \mathbf{W_h} + \mathbf{x}^{(t)} \mathbf{W_x} \right) \\
+\mathbf{o}^{(t)} &amp;= \mathbf{c} +\mathbf{h}^{(t)} \mathbf{V} \\
+\mathbf{\hat{y}}^{(t)} &amp;= softmax\left( \mathbf{o}^{(t)} \right) \\
+\mathbf{L}^{(t)} &amp;= L(\mathbf{y}^{(t)}, \mathbf{\hat{y}}^{(t)}) \\
+L &amp;= \sum^{T}_{t=1} \sum^{N}_{i=1} L^{(t)}_{i}
+\end{aligned}
+\]</span></p>
+<p>Here, we also want to take input as a minibatch of N entries. The dimensions of <span class="math inline">\(\mathbf{x}^{(t)}\)</span>, <span class="math inline">\(\mathbf{h}^{(t-1)}\)</span>, <span class="math inline">\(\mathbf{W_h}\)</span>, <span class="math inline">\(\mathbf{W_x}\)</span>, <span class="math inline">\(\mathbf{V}\)</span>, <span class="math inline">\(\mathbf{L}^{(t)}\)</span> are <span class="math inline">\((N,D)\)</span>, <span class="math inline">\((N,H)\)</span>, <span class="math inline">\((H,H)\)</span>, <span class="math inline">\((D,H)\)</span>, <span class="math inline">\((D, C)\)</span>,<span class="math inline">\((N,)\)</span> respectively. <span class="math inline">\(L^{(t)}_{i}\)</span> is the <span class="math inline">\(i\)</span>-th element of <span class="math inline">\(\mathbf{L}^{(t)}\)</span>. The Loss function is the common cross-entropy loss.</p>
+<p>The most headache problem involve the derivative to <span class="math inline">\(\mathbf{W_h}\)</span>, <span class="math inline">\(\mathbf{W_x}\)</span> and <span class="math inline">\(\mathbf{b}\)</span>. Because they are in all <span class="math inline">\(\mathbf{h}^{(t)}\)</span> so the derivatives get some sort of recursive fashion. It's quite a thorny thing to deal with. So here, we will cut directly to this part. I will put down the derivation of the derivative of <span class="math inline">\(L\)</span> to <span class="math inline">\(\mathbf{W_h}\)</span>. Others will leave as exercises for you:)</p>
+<p>Goal: Find the total derivative $ $</p>
+<p><span class="math display">\[
+\frac{\mathrm{d}L}{\mathrm{d}\mathbf{W_h}}= \sum^{T}_{t=1} \frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_h}}
+\]</span></p>
+<p>Notice the <span class="math inline">\(L^{(t)}\)</span> is a scalar and it's <span class="math inline">\(\sum^{N}_{i=1} L^{(t)}_{i}\)</span>. We will just look at one of them to have a sense of how it will end up.</p>
+<p><span class="math display">\[
+\frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_h}} =
+\frac{\mathrm{d}\mathbf{h}^{(t)}}{\mathrm{d}\mathbf{W_h}}
+\frac{\partial \mathbf{o}^{(t)}}{\partial \mathbf{h}^{(t)}}
+\frac{\partial \mathbf{\hat{y}}^{(t)}}{\partial \mathbf{o}^{(t)}}
+\frac{\partial L^{(t)}}{\partial \mathbf{\hat{y}}^{(t)}}
+\]</span></p>
+<p>In order to use tricks like BP in the Neural network. We will compute the partial derivative in sequence. Note again the symbol <span class="math inline">\(d\)</span> is just for notation convenience and has nothing to do with <strong>total</strong> derivative.</p>
+<p><span class="math display">\[
+\begin{aligned}
+d\mathbf{o}^{(t)} &amp;= \frac{\partial L^{(t)}}{\partial \mathbf{o}^{(t)}} = \mathbf{\hat{y}}^{(t)} - \mathbf{1_{y^{(t)}}} \\
+d\mathbf{h}^{(t)} &amp;=  d\mathbf{o}^{(t)} V^{T}
+\end{aligned}
+\]</span></p>
+<p><span class="math inline">\(\mathbf{1_{y^{(t)}}}\)</span> is a special matrix of same size as <span class="math inline">\(\mathbf{\hat{y}}^{(t)}\)</span>. For row <span class="math inline">\(i\)</span> in <span class="math inline">\(\mathbf{1_{y^{(t)}}}\)</span>, the <span class="math inline">\(y^{(t)}_{i}\)</span>-th element is 1, others are zero.</p>
+<p>Then, we will define a intermediate matrix <span class="math inline">\(\mathbf{a}^{(t)}\)</span> to avoid the use of 4 dimensional tensor. Notice the square of <span class="math inline">\(d\mathbf{h}^{(t)}\)</span> is a element-wise square operation.</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbf{a}^{(t)} &amp;=\mathbf{b} + \mathbf{h}^{(t-1)} \mathbf{W_h} + \mathbf{x}^{(t)} \mathbf{W_h} \\
+\mathbf{h}^{(t)} &amp;=\tanh\left( \mathbf{a}^{(t)} \right) \\
+d\mathbf{h}^{(t)} &amp;=  d\mathbf{o}^{(t)} V^{T} \\
+d\mathbf{a}^{(t)} &amp;= 1 - (d\mathbf{h}^{(t)})^2 \\ 
+\frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_h}} &amp;=
+\frac{\mathrm{d}\mathbf{a}^{(t)}}{\mathrm{d}\mathbf{W_h}} 
+d\mathbf{a}^{(t)} \\
+&amp;=
+(\frac{\mathrm{d}\mathbf{W_h}}{\mathrm{d}\mathbf{W_h}}
+\frac{\partial \mathbf{a}^{(t)}}{\partial \mathbf{W_h}} +
+\frac{\mathrm{d}\mathbf{h}^{(t-1)}}{\mathrm{d}\mathbf{W_h}}
+\frac{\partial \mathbf{a}^{(t)}}{\partial \mathbf{h}^{(t-1)}} )d\mathbf{a}^{(t)}
+\end{aligned}
+\]</span></p>
+<p>For the last equation, the first part is simply. If we use the result from above. The product will simply be $ d{^{(t)}} = (<sup>{(t-1)})</sup>T d^{(t)}$. And then we can furthur integrate the last part of the equation. At last we get:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_h}} &amp;= d{\mathbf{W_h}^{(t)}} + 
+\frac{\mathrm{d}\mathbf{h}^{(t-1)}}{\mathrm{d}\mathbf{W_h}}
+d\mathbf{h}^{(t-1)} \\
+d\mathbf{h}^{(t-1)} &amp;=  d\mathbf{a}^{(t)} (\mathbf{h}^{(t-1)})^T
+\end{aligned}
+\]</span></p>
+<p>And then, we find this can be done recursively afterwards. <span class="math inline">\(d\mathbf{h}^{(t-1)}\)</span> will be passed down just like the waterflow in the BP in Neural network. At last, after rearrangement, we will have a final version like this. In order to calculate <span class="math inline">\(d{\mathbf{W_h}^{(1)}}\)</span>, there should be a <span class="math inline">\(\mathbf{h}^{(0)}\)</span> as initialization value for the hidden state here.</p>
+<p><span class="math display">\[
+\begin{aligned}
+\frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_x}} &amp;= 
+\sum^{t}_{i=1}d{\mathbf{W_h}^{(i)}}
+\end{aligned}
+\]</span></p>
+<p>In the application, when we are trying to calculate the <span class="math inline">\(\frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_x}}\)</span>, for a given timestep $t=t_0 \left[ 1, t ) $, we may first receive the derivative message from <span class="math inline">\(t_0+1\)</span> and then we need to pass down the derivative message. The whole process will looks like this.</p>
+<p><span class="math display">\[
+\begin{aligned}
+d\mathbf{a}^{(i)} &amp;= 1 - (d\mathbf{h}^{(i)})^2 \\
+d{\mathbf{W_h}^{(i)}} &amp;=  (\mathbf{h}^{(t-1)})^T d\mathbf{a}^{(t)} \\
+d{\mathbf{W_x}^{(i)}} &amp;= \ \dots \\
+d{\mathbf{X}^{(i)}} &amp;= \ \dots \\
+d{\mathbf{b}^{(i)}} &amp;= \ \dots \\
+d\mathbf{h}^{(i-1)} &amp;=  d\mathbf{a}^{(i)} (\mathbf{h}^{(i-1)})^T
+\end{aligned}
+\]</span></p>
+<p>And then there will be <span class="math inline">\(T\)</span> timestamps we need to compute corresponding to <span class="math inline">\(T\)</span> different <span class="math inline">\(L^{(t)}\)</span>.</p>
 <hr>
-<p>If you find any mistakes in this passage, feel free to contact me through my email: FDSM_lhn@yahoo.com. </p>
-<p>You’re welcome to share my passage to other websites or bloggers. <strong>But please add my name and link to this post alongside</strong>. Thank you!</p>
+<p>If you find any mistakes in this passage, feel free to contact me through my email: FDSM_lhn@yahoo.com.</p>
+<p>You're welcome to share my passage to other websites or bloggers. <strong>But please add my name and link to this post alongside</strong>. Thank you!</p>
 
       
     </div>
@@ -698,7 +782,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Math-Recap-the-difference-between-partial-derivative-and-total-derivative"><span class="nav-number">1.</span> <span class="nav-text">Math Recap: the difference between partial derivative and total derivative.</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Partial-derivative-for-Neural-Network"><span class="nav-number">2.</span> <span class="nav-text">Partial derivative for Neural Network</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Formal-derivation"><span class="nav-number">2.1.</span> <span class="nav-text">Formal derivation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Tricky-derivation"><span class="nav-number">2.2.</span> <span class="nav-text">Tricky derivation</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#The-essence-of-BPTT-in-vanilla-RNN"><span class="nav-number">3.</span> <span class="nav-text">The essence of BPTT in vanilla RNN</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#math-recap-the-difference-between-partial-derivative-and-total-derivative."><span class="nav-number">1.</span> <span class="nav-text">Math Recap: the difference between partial derivative and total derivative.</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#partial-derivative-for-neural-network"><span class="nav-number">2.</span> <span class="nav-text">Partial derivative for Neural Network</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#formal-derivation"><span class="nav-number">2.1.</span> <span class="nav-text">Formal derivation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tricky-derivation"><span class="nav-number">2.2.</span> <span class="nav-text">Tricky derivation</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#the-essence-of-bptt-in-vanilla-rnn"><span class="nav-number">3.</span> <span class="nav-text">The essence of BPTT in vanilla RNN</span></a></li></ol></div>
             
 
           </div>

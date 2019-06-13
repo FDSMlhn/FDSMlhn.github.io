@@ -421,61 +421,59 @@
 
       
         <hr>
-<p>This passage will lead you through the whole process of the implementation of image classification tasks on CIFAR-10 and also explain some confusing parts for beginners in detail. Besides, I also put down what I’ve learned in the middle and hope you will at least grasp how you should build up the whole pipeline of conv net at last.<br><a id="more"></a></p>
-<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true">#notebook setup</span>
-<span class="token keyword">import</span> torch
-<span class="token keyword">import</span> torch<span class="token punctuation">.</span>nn <span class="token keyword">as</span> nn
-<span class="token keyword">from</span> torch<span class="token punctuation">.</span>nn <span class="token keyword">import</span> init
-<span class="token keyword">from</span> torch<span class="token punctuation">.</span>autograd <span class="token keyword">import</span> Variable
-<span class="token keyword">import</span> torchvision
-<span class="token keyword">import</span> torchvision<span class="token punctuation">.</span>transforms <span class="token keyword">as</span> T
-<span class="token keyword">import</span> torch<span class="token punctuation">.</span>optim <span class="token keyword">as</span> optim
-<span class="token keyword">from</span> torch<span class="token punctuation">.</span>utils<span class="token punctuation">.</span>data <span class="token keyword">import</span> DataLoader
-<span class="token keyword">from</span> torch<span class="token punctuation">.</span>utils<span class="token punctuation">.</span>data<span class="token punctuation">.</span>sampler <span class="token keyword">import</span> SubsetRandomSampler
-<span class="token keyword">import</span> torchvision<span class="token punctuation">.</span>datasets <span class="token keyword">as</span> dset
-<span class="token keyword">import</span> torch<span class="token punctuation">.</span>backends<span class="token punctuation">.</span>cudnn <span class="token keyword">as</span> cudnn
-<span class="token keyword">from</span> torch<span class="token punctuation">.</span>optim<span class="token punctuation">.</span>lr_scheduler <span class="token keyword">import</span> MultiStepLR
-
-
-<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
-<span class="token keyword">from</span> utils <span class="token keyword">import</span> progress_bar
-
-<span class="token keyword">import</span> matplotlib
-<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
-<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>gridspec <span class="token keyword">as</span> gridspec
-
-<span class="token operator">%</span>matplotlib inline
-plt<span class="token punctuation">.</span>rcParams<span class="token punctuation">[</span><span class="token string">'figure.figsize'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">10.0</span><span class="token punctuation">,</span> <span class="token number">8.0</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># set default size of plots</span>
-plt<span class="token punctuation">.</span>rcParams<span class="token punctuation">[</span><span class="token string">'image.interpolation'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">'nearest'</span>
-plt<span class="token punctuation">.</span>rcParams<span class="token punctuation">[</span><span class="token string">'image.cmap'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">'gray'</span>
-
-<span class="token operator">%</span>load_ext autoreload
-<span class="token operator">%</span>autoreload <span class="token number">2</span>
-</code></pre>
+<p>This passage will lead you through the whole process of the implementation of image classification tasks on CIFAR-10 and also explain some confusing parts for beginners in detail. Besides, I also put down what I've learned in the middle and hope you will at least grasp how you should build up the whole pipeline of conv net at last. <a id="more"></a></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co">#notebook setup</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="im">import</span> torch</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="im">import</span> torch.nn <span class="im">as</span> nn</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="im">from</span> torch.nn <span class="im">import</span> init</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="im">from</span> torch.autograd <span class="im">import</span> Variable</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="im">import</span> torchvision</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="im">import</span> torchvision.transforms <span class="im">as</span> T</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="im">import</span> torch.optim <span class="im">as</span> optim</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="im">from</span> torch.utils.data <span class="im">import</span> DataLoader</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10"><span class="im">from</span> torch.utils.data.sampler <span class="im">import</span> SubsetRandomSampler</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11"><span class="im">import</span> torchvision.datasets <span class="im">as</span> dset</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12"><span class="im">import</span> torch.backends.cudnn <span class="im">as</span> cudnn</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13"><span class="im">from</span> torch.optim.lr_scheduler <span class="im">import</span> MultiStepLR</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb1-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb1-16" data-line-number="16"><span class="im">import</span> numpy <span class="im">as</span> np</a>
+<a class="sourceLine" id="cb1-17" data-line-number="17"><span class="im">from</span> utils <span class="im">import</span> progress_bar</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb1-19" data-line-number="19"><span class="im">import</span> matplotlib</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20"><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</a>
+<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="im">import</span> matplotlib.gridspec <span class="im">as</span> gridspec</a>
+<a class="sourceLine" id="cb1-22" data-line-number="22"></a>
+<a class="sourceLine" id="cb1-23" data-line-number="23"><span class="op">%</span>matplotlib inline</a>
+<a class="sourceLine" id="cb1-24" data-line-number="24">plt.rcParams[<span class="st">&#39;figure.figsize&#39;</span>] <span class="op">=</span> (<span class="fl">10.0</span>, <span class="fl">8.0</span>) <span class="co"># set default size of plots</span></a>
+<a class="sourceLine" id="cb1-25" data-line-number="25">plt.rcParams[<span class="st">&#39;image.interpolation&#39;</span>] <span class="op">=</span> <span class="st">&#39;nearest&#39;</span></a>
+<a class="sourceLine" id="cb1-26" data-line-number="26">plt.rcParams[<span class="st">&#39;image.cmap&#39;</span>] <span class="op">=</span> <span class="st">&#39;gray&#39;</span></a>
+<a class="sourceLine" id="cb1-27" data-line-number="27"></a>
+<a class="sourceLine" id="cb1-28" data-line-number="28"><span class="op">%</span>load_ext autoreload</a>
+<a class="sourceLine" id="cb1-29" data-line-number="29"><span class="op">%</span>autoreload <span class="dv">2</span></a></code></pre></div>
 <pre><code>The autoreload extension is already loaded. To reload it, use:
-  %reload_ext autoreload
-</code></pre><p>And also some useful function:</p>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">show_images</span><span class="token punctuation">(</span>imgs<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    NUM <span class="token operator">=</span> imgs<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-
-    sqrtn <span class="token operator">=</span> int<span class="token punctuation">(</span>np<span class="token punctuation">.</span>ceil<span class="token punctuation">(</span>np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>NUM<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    sqrtimg <span class="token operator">=</span> int<span class="token punctuation">(</span>np<span class="token punctuation">.</span>ceil<span class="token punctuation">(</span>np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>NUM<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-    fig <span class="token operator">=</span> plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span>sqrtn<span class="token punctuation">,</span> sqrtn<span class="token punctuation">)</span><span class="token punctuation">)</span>
-    gs <span class="token operator">=</span> gridspec<span class="token punctuation">.</span>GridSpec<span class="token punctuation">(</span>sqrtn<span class="token punctuation">,</span> sqrtn<span class="token punctuation">)</span>
-    gs<span class="token punctuation">.</span>update<span class="token punctuation">(</span>wspace<span class="token operator">=</span><span class="token number">0.05</span><span class="token punctuation">,</span> hspace<span class="token operator">=</span><span class="token number">0.05</span><span class="token punctuation">)</span>
-
-    <span class="token keyword">for</span> i<span class="token punctuation">,</span> img <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>imgs<span class="token punctuation">)</span><span class="token punctuation">:</span>
-        ax <span class="token operator">=</span> plt<span class="token punctuation">.</span>subplot<span class="token punctuation">(</span>gs<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
-        plt<span class="token punctuation">.</span>axis<span class="token punctuation">(</span><span class="token string">'off'</span><span class="token punctuation">)</span>
-        ax<span class="token punctuation">.</span>set_xticklabels<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-        ax<span class="token punctuation">.</span>set_yticklabels<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-        ax<span class="token punctuation">.</span>set_aspect<span class="token punctuation">(</span><span class="token string">'equal'</span><span class="token punctuation">)</span>
-        plt<span class="token punctuation">.</span>imshow<span class="token punctuation">(</span>img<span class="token punctuation">)</span>
-    <span class="token keyword">return</span>
-</code></pre>
+  %reload_ext autoreload</code></pre>
+<p>And also some useful function:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">def</span> show_images(imgs):</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">    NUM <span class="op">=</span> imgs.shape[<span class="dv">0</span>]</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">    </a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">    sqrtn <span class="op">=</span> <span class="bu">int</span>(np.ceil(np.sqrt(NUM)))</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">    sqrtimg <span class="op">=</span> <span class="bu">int</span>(np.ceil(np.sqrt(NUM)))</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">    fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>(sqrtn, sqrtn))</a>
+<a class="sourceLine" id="cb3-8" data-line-number="8">    gs <span class="op">=</span> gridspec.GridSpec(sqrtn, sqrtn)</a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">    gs.update(wspace<span class="op">=</span><span class="fl">0.05</span>, hspace<span class="op">=</span><span class="fl">0.05</span>)</a>
+<a class="sourceLine" id="cb3-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb3-11" data-line-number="11">    <span class="cf">for</span> i, img <span class="kw">in</span> <span class="bu">enumerate</span>(imgs):</a>
+<a class="sourceLine" id="cb3-12" data-line-number="12">        ax <span class="op">=</span> plt.subplot(gs[i])</a>
+<a class="sourceLine" id="cb3-13" data-line-number="13">        plt.axis(<span class="st">&#39;off&#39;</span>)</a>
+<a class="sourceLine" id="cb3-14" data-line-number="14">        ax.set_xticklabels([])</a>
+<a class="sourceLine" id="cb3-15" data-line-number="15">        ax.set_yticklabels([])</a>
+<a class="sourceLine" id="cb3-16" data-line-number="16">        ax.set_aspect(<span class="st">&#39;equal&#39;</span>)</a>
+<a class="sourceLine" id="cb3-17" data-line-number="17">        plt.imshow(img)</a>
+<a class="sourceLine" id="cb3-18" data-line-number="18">    <span class="cf">return</span></a></code></pre></div>
 <p>First we need to download the data if needed. And then preprocess as following:</p>
-<ol>
+<ol type="1">
 <li>4 pixels padding and random cropping</li>
 <li>flipping randomly</li>
 <li>normalize</li>
@@ -483,188 +481,185 @@ plt<span class="token punctuation">.</span>rcParams<span class="token punctuatio
 <hr>
 <p>The intuition behind them are explained <a href="https://stackoverflow.com/questions/32842308/random-cropping-and-flipping-in-convolutional-neural-networks/32844299" target="_blank" rel="noopener">here</a>:</p>
 <blockquote>
-<p>This is referred to as <strong>data augmentation</strong>. By applying transformations to the training data, you’re adding synthetic data points. This exposes the model to additional variations without the cost of collecting and annotating more data. This can have the effect of reducing overfitting and improving the model’s ability to generalize.</p>
-<p>The intuition behind <strong>flipping</strong> an image is that an object should be equally recognizable as its mirror image. Note that horizontal flipping is the type of flipping often used. Vertical flipping doesn’t always make sense but this depends on the data.</p>
-<p>The idea behind <strong>cropping</strong> is that to reduce the contribution of the background in the CNNs decision. That’s useful if you have labels for locating where your object is. This lets you use surrounding regions as negative examples and building a better detector. Random cropping can also act as a regularizer and base your classification on the presence of parts of the object <em>instead of focusing everything on a very distinct feature</em> that may not always be present.</p>
+<p>This is referred to as <strong>data augmentation</strong>. By applying transformations to the training data, you're adding synthetic data points. This exposes the model to additional variations without the cost of collecting and annotating more data. This can have the effect of reducing overfitting and improving the model's ability to generalize.</p>
+</blockquote>
+<blockquote>
+<p>The intuition behind <strong>flipping</strong> an image is that an object should be equally recognizable as its mirror image. Note that horizontal flipping is the type of flipping often used. Vertical flipping doesn't always make sense but this depends on the data.</p>
+</blockquote>
+<blockquote>
+<p>The idea behind <strong>cropping</strong> is that to reduce the contribution of the background in the CNNs decision. That's useful if you have labels for locating where your object is. This lets you use surrounding regions as negative examples and building a better detector. Random cropping can also act as a regularizer and base your classification on the presence of parts of the object <em>instead of focusing everything on a very distinct feature</em> that may not always be present.</p>
 </blockquote>
 <p>And a very approaching idea on random cropping:</p>
 <blockquote>
 <p>I think random cropping also associate a broader range of spatial activation statistics with a certain class label and thus makes the algorithm more robust.</p>
 </blockquote>
 <hr>
-<p>Some tips here:</p>
-<ol>
-<li>just mentioned CIFAR in PyTorch will load all data into memory at the beginning, not too large.</li>
-<li>T.ToTensor will convert img in the range [0,255] to that in [0,1]. Some codes Normalize them using (0.5,0.5,0.5) to rescale it to range(-1,1) after ToTensor operation.</li>
-</ol>
-<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># size of the image dataset N * 32 * 32 * 3</span>
-NUM_TRAIN <span class="token operator">=</span> <span class="token number">45000</span>
-NUM_VAL <span class="token operator">=</span> <span class="token number">5000</span>
-
-
-train_CIFAR <span class="token operator">=</span> dset<span class="token punctuation">.</span>CIFAR10<span class="token punctuation">(</span><span class="token string">'../datasets/'</span><span class="token punctuation">,</span> train<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> download<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
-train_mean <span class="token operator">=</span> np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>train_CIFAR<span class="token punctuation">.</span>train_data<span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">255</span>
-train_std <span class="token operator">=</span> np<span class="token punctuation">.</span>std<span class="token punctuation">(</span>train_CIFAR<span class="token punctuation">.</span>train_data<span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">255</span>
-
-train_transform <span class="token operator">=</span> T<span class="token punctuation">.</span>Compose<span class="token punctuation">(</span><span class="token punctuation">[</span>
-    T<span class="token punctuation">.</span>RandomCrop<span class="token punctuation">(</span><span class="token number">32</span><span class="token punctuation">,</span> padding<span class="token operator">=</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-    T<span class="token punctuation">.</span>RandomHorizontalFlip<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-    T<span class="token punctuation">.</span>ToTensor<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-    T<span class="token punctuation">.</span>Normalize<span class="token punctuation">(</span>train_mean<span class="token punctuation">,</span> train_std<span class="token punctuation">)</span>
-<span class="token punctuation">]</span><span class="token punctuation">)</span>
-
-test_transform <span class="token operator">=</span> T<span class="token punctuation">.</span>Compose<span class="token punctuation">(</span><span class="token punctuation">[</span>
-    T<span class="token punctuation">.</span>ToTensor<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-    T<span class="token punctuation">.</span>Normalize<span class="token punctuation">(</span>train_mean<span class="token punctuation">,</span> train_std<span class="token punctuation">)</span>
-<span class="token punctuation">]</span><span class="token punctuation">)</span>
-train_CIFAR <span class="token operator">=</span> dset<span class="token punctuation">.</span>CIFAR10<span class="token punctuation">(</span><span class="token string">'../datasets/'</span><span class="token punctuation">,</span> train<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> download<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> transform <span class="token operator">=</span> train_transform<span class="token punctuation">)</span>
-train_loader <span class="token operator">=</span> DataLoader<span class="token punctuation">(</span>train_CIFAR<span class="token punctuation">,</span> batch_size <span class="token operator">=</span> <span class="token number">128</span><span class="token punctuation">,</span> num_workers<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span> 
-                          sampler<span class="token operator">=</span> SubsetRandomSampler<span class="token punctuation">(</span>list<span class="token punctuation">(</span>range<span class="token punctuation">(</span>NUM_TRAIN<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-val_loader <span class="token operator">=</span> DataLoader<span class="token punctuation">(</span>train_CIFAR<span class="token punctuation">,</span> batch_size <span class="token operator">=</span> <span class="token number">128</span><span class="token punctuation">,</span> num_workers<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span> 
-                          sampler<span class="token operator">=</span> SubsetRandomSampler<span class="token punctuation">(</span>list<span class="token punctuation">(</span>range<span class="token punctuation">(</span>NUM_TRAIN<span class="token punctuation">,</span><span class="token punctuation">(</span>NUM_TRAIN<span class="token operator">+</span>NUM_VAL<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-test_CIFAR <span class="token operator">=</span> dset<span class="token punctuation">.</span>CIFAR10<span class="token punctuation">(</span><span class="token string">'../datasets/'</span><span class="token punctuation">,</span> train<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> download<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> transform<span class="token operator">=</span> test_transform<span class="token punctuation">)</span>
-test_loader <span class="token operator">=</span> DataLoader<span class="token punctuation">(</span>test_CIFAR<span class="token punctuation">,</span> batch_size <span class="token operator">=</span> <span class="token number">128</span><span class="token punctuation">,</span> num_workers<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span> shuffle<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
-
-NUM_SHOW <span class="token operator">=</span> <span class="token number">16</span>
-
-img <span class="token operator">=</span>train_CIFAR<span class="token punctuation">.</span>train_data<span class="token punctuation">[</span><span class="token punctuation">:</span>NUM_SHOW<span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span>
-show_images<span class="token punctuation">(</span>img<span class="token punctuation">)</span>
-</code></pre>
+<p>Some tips here: 1. just mentioned CIFAR in PyTorch will load all data into memory at the beginning, not too large. 2. T.ToTensor will convert img in the range [0,255] to that in [0,1]. Some codes Normalize them using (0.5,0.5,0.5) to rescale it to range(-1,1) after ToTensor operation.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="co"># size of the image dataset N * 32 * 32 * 3</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">NUM_TRAIN <span class="op">=</span> <span class="dv">45000</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">NUM_VAL <span class="op">=</span> <span class="dv">5000</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">train_CIFAR <span class="op">=</span> dset.CIFAR10(<span class="st">&#39;../datasets/&#39;</span>, train<span class="op">=</span><span class="va">True</span>, download<span class="op">=</span><span class="va">True</span>)</a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">train_mean <span class="op">=</span> np.mean(train_CIFAR.train_data, axis<span class="op">=</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">2</span>))<span class="op">/</span><span class="dv">255</span></a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">train_std <span class="op">=</span> np.std(train_CIFAR.train_data, axis<span class="op">=</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">2</span>))<span class="op">/</span><span class="dv">255</span></a>
+<a class="sourceLine" id="cb4-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb4-10" data-line-number="10">train_transform <span class="op">=</span> T.Compose([</a>
+<a class="sourceLine" id="cb4-11" data-line-number="11">    T.RandomCrop(<span class="dv">32</span>, padding<span class="op">=</span><span class="dv">4</span>),</a>
+<a class="sourceLine" id="cb4-12" data-line-number="12">    T.RandomHorizontalFlip(),</a>
+<a class="sourceLine" id="cb4-13" data-line-number="13">    T.ToTensor(),</a>
+<a class="sourceLine" id="cb4-14" data-line-number="14">    T.Normalize(train_mean, train_std)</a>
+<a class="sourceLine" id="cb4-15" data-line-number="15">])</a>
+<a class="sourceLine" id="cb4-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb4-17" data-line-number="17">test_transform <span class="op">=</span> T.Compose([</a>
+<a class="sourceLine" id="cb4-18" data-line-number="18">    T.ToTensor(),</a>
+<a class="sourceLine" id="cb4-19" data-line-number="19">    T.Normalize(train_mean, train_std)</a>
+<a class="sourceLine" id="cb4-20" data-line-number="20">])</a>
+<a class="sourceLine" id="cb4-21" data-line-number="21">train_CIFAR <span class="op">=</span> dset.CIFAR10(<span class="st">&#39;../datasets/&#39;</span>, train<span class="op">=</span><span class="va">True</span>, download<span class="op">=</span><span class="va">True</span>, transform <span class="op">=</span> train_transform)</a>
+<a class="sourceLine" id="cb4-22" data-line-number="22">train_loader <span class="op">=</span> DataLoader(train_CIFAR, batch_size <span class="op">=</span> <span class="dv">128</span>, num_workers<span class="op">=</span><span class="dv">2</span>, </a>
+<a class="sourceLine" id="cb4-23" data-line-number="23">                          sampler<span class="op">=</span> SubsetRandomSampler(<span class="bu">list</span>(<span class="bu">range</span>(NUM_TRAIN))))</a>
+<a class="sourceLine" id="cb4-24" data-line-number="24">val_loader <span class="op">=</span> DataLoader(train_CIFAR, batch_size <span class="op">=</span> <span class="dv">128</span>, num_workers<span class="op">=</span><span class="dv">2</span>, </a>
+<a class="sourceLine" id="cb4-25" data-line-number="25">                          sampler<span class="op">=</span> SubsetRandomSampler(<span class="bu">list</span>(<span class="bu">range</span>(NUM_TRAIN,(NUM_TRAIN<span class="op">+</span>NUM_VAL)))))</a>
+<a class="sourceLine" id="cb4-26" data-line-number="26"></a>
+<a class="sourceLine" id="cb4-27" data-line-number="27">test_CIFAR <span class="op">=</span> dset.CIFAR10(<span class="st">&#39;../datasets/&#39;</span>, train<span class="op">=</span><span class="va">False</span>, download<span class="op">=</span><span class="va">True</span>, transform<span class="op">=</span> test_transform)</a>
+<a class="sourceLine" id="cb4-28" data-line-number="28">test_loader <span class="op">=</span> DataLoader(test_CIFAR, batch_size <span class="op">=</span> <span class="dv">128</span>, num_workers<span class="op">=</span><span class="dv">2</span>, shuffle<span class="op">=</span><span class="va">False</span>)</a>
+<a class="sourceLine" id="cb4-29" data-line-number="29"></a>
+<a class="sourceLine" id="cb4-30" data-line-number="30">NUM_SHOW <span class="op">=</span> <span class="dv">16</span></a>
+<a class="sourceLine" id="cb4-31" data-line-number="31"></a>
+<a class="sourceLine" id="cb4-32" data-line-number="32">img <span class="op">=</span>train_CIFAR.train_data[:NUM_SHOW,:]</a>
+<a class="sourceLine" id="cb4-33" data-line-number="33">show_images(img)</a></code></pre></div>
 <pre><code>Files already downloaded and verified
 Files already downloaded and verified
-Files already downloaded and verified
-</code></pre><p><img src="main_files/main_5_1.png" alt="png"></p>
+Files already downloaded and verified</code></pre>
+<figure>
+<img src="main_files/main_5_1.png" alt="png"><figcaption>png</figcaption>
+</figure>
 <p>Then we will import Resnet-18 to train our dataset on the training data. These two models use different architecture, one with basic block and the other with one called bottleneck. I specifically choose these two different sorts of models with relatively less layers due to the limit of the computational resources.</p>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> resnet <span class="token keyword">import</span> Resnet18
-
-net <span class="token operator">=</span> Resnet18<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-criterion <span class="token operator">=</span> nn<span class="token punctuation">.</span>CrossEntropyLoss<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true">#Adam does not perform so good here</span>
-optimizer <span class="token operator">=</span> optim<span class="token punctuation">.</span>SGD<span class="token punctuation">(</span>net<span class="token punctuation">.</span>parameters<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> lr<span class="token operator">=</span><span class="token number">0.1</span><span class="token punctuation">,</span> momentum<span class="token operator">=</span><span class="token number">0.9</span><span class="token punctuation">,</span> weight_decay<span class="token operator">=</span><span class="token number">8e</span><span class="token operator">-</span><span class="token number">4</span><span class="token punctuation">,</span> nesterov<span class="token operator">=</span> <span class="token boolean">True</span><span class="token punctuation">)</span>
-scheduler <span class="token operator">=</span> MultiStepLR<span class="token punctuation">(</span>optimizer<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">100</span><span class="token punctuation">,</span><span class="token number">150</span><span class="token punctuation">]</span><span class="token punctuation">,</span> gamma<span class="token operator">=</span><span class="token number">0.1</span><span class="token punctuation">)</span>
-</code></pre>
-<pre class=" language-python"><code class="language-python">use_cuda <span class="token operator">=</span> torch<span class="token punctuation">.</span>cuda<span class="token punctuation">.</span>is_available<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'GPU %s available on this machine!'</span> <span class="token operator">%</span><span class="token punctuation">(</span><span class="token string">'is'</span> <span class="token keyword">if</span> use_cuda <span class="token keyword">else</span> <span class="token string">'is not'</span> <span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">if</span> use_cuda<span class="token punctuation">:</span>
-    net<span class="token punctuation">.</span>cuda<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    net <span class="token operator">=</span> torch<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>DataParallel<span class="token punctuation">(</span>net<span class="token punctuation">,</span> device_ids<span class="token operator">=</span>range<span class="token punctuation">(</span>torch<span class="token punctuation">.</span>cuda<span class="token punctuation">.</span>device_count<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    cudnn<span class="token punctuation">.</span>benchmark <span class="token operator">=</span> <span class="token boolean">True</span>
-
-<span class="token keyword">def</span> <span class="token function">train</span><span class="token punctuation">(</span>epoch<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token keyword">global</span> train_data
-    loss_hist <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
-    train_acc_hist <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
-    val_acc_hist <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
-    test_acc_hist <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
-    train_data<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
-    train_data<span class="token punctuation">[</span><span class="token string">'loss_hist'</span><span class="token punctuation">]</span> <span class="token operator">=</span> loss_hist
-    train_data<span class="token punctuation">[</span><span class="token string">'train_acc_hist'</span><span class="token punctuation">]</span> <span class="token operator">=</span> train_acc_hist
-    train_data<span class="token punctuation">[</span><span class="token string">'val_acc_hist'</span><span class="token punctuation">]</span> <span class="token operator">=</span>  val_acc_hist
-    train_data<span class="token punctuation">[</span><span class="token string">'test_acc_hist'</span><span class="token punctuation">]</span> <span class="token operator">=</span>  test_acc_hist
-
-
-    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>epoch<span class="token punctuation">)</span><span class="token punctuation">:</span>
-        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'This is epoch:{}'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-        total<span class="token operator">=</span> <span class="token number">0</span>
-        correct<span class="token operator">=</span><span class="token number">0</span>
-        scheduler<span class="token punctuation">.</span>step<span class="token punctuation">(</span><span class="token punctuation">)</span>
-        net<span class="token punctuation">.</span>train<span class="token punctuation">(</span><span class="token punctuation">)</span>
-        <span class="token keyword">for</span> j<span class="token punctuation">,</span><span class="token punctuation">(</span>batch_x<span class="token punctuation">,</span> batch_y<span class="token punctuation">)</span> <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>train_loader<span class="token punctuation">)</span><span class="token punctuation">:</span>
-            optimizer<span class="token punctuation">.</span>zero_grad<span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token keyword">if</span> use_cuda<span class="token punctuation">:</span>
-                batch_x<span class="token punctuation">,</span> batch_y <span class="token operator">=</span> batch_x<span class="token punctuation">.</span>cuda<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> batch_y<span class="token punctuation">.</span>cuda<span class="token punctuation">(</span><span class="token punctuation">)</span>
-            x <span class="token operator">=</span> Variable<span class="token punctuation">(</span>batch_x<span class="token punctuation">)</span>
-            y <span class="token operator">=</span> Variable<span class="token punctuation">(</span>batch_y<span class="token punctuation">)</span>
-            out <span class="token operator">=</span> net<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
-            loss <span class="token operator">=</span> criterion<span class="token punctuation">(</span>out<span class="token punctuation">,</span> y<span class="token punctuation">)</span>
-            loss<span class="token punctuation">.</span>backward<span class="token punctuation">(</span><span class="token punctuation">)</span>
-            optimizer<span class="token punctuation">.</span>step<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-            _<span class="token punctuation">,</span> predicted <span class="token operator">=</span> torch<span class="token punctuation">.</span>max<span class="token punctuation">(</span>out<span class="token punctuation">.</span>data<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
-            total <span class="token operator">+=</span> y<span class="token punctuation">.</span>size<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
-            correct <span class="token operator">+=</span> predicted<span class="token punctuation">.</span>eq<span class="token punctuation">(</span>y<span class="token punctuation">.</span>data<span class="token punctuation">)</span><span class="token punctuation">.</span>cpu<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>sum<span class="token punctuation">(</span><span class="token punctuation">)</span>
-            progress_bar<span class="token punctuation">(</span>j<span class="token punctuation">,</span> len<span class="token punctuation">(</span>train_loader<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'Loss: %.3f | Acc: %.3f%% (%d/%d)'</span>
-                <span class="token operator">%</span> <span class="token punctuation">(</span>loss<span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">.</span><span class="token operator">*</span>correct<span class="token operator">/</span>total<span class="token punctuation">,</span> correct<span class="token punctuation">,</span> total<span class="token punctuation">)</span><span class="token punctuation">)</span>
-            <span class="token keyword">if</span> j <span class="token operator">%</span> <span class="token number">50</span><span class="token operator">==</span><span class="token number">0</span><span class="token punctuation">:</span>
-                loss_hist<span class="token punctuation">.</span>append<span class="token punctuation">(</span>loss<span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-
-        train_acc_hist<span class="token punctuation">.</span>append<span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span><span class="token operator">*</span>correct<span class="token operator">/</span>total<span class="token punctuation">)</span>
-        <span class="token keyword">if</span> i <span class="token operator">%</span><span class="token number">1</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
-            acc <span class="token operator">=</span> test<span class="token punctuation">(</span>val_loader<span class="token punctuation">)</span>
-            val_acc_hist<span class="token punctuation">.</span>append<span class="token punctuation">(</span>acc<span class="token punctuation">)</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Epoch {}, loss: {}, accuracy: {}'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span> loss_hist<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> acc<span class="token punctuation">)</span><span class="token punctuation">)</span>
-            acc <span class="token operator">=</span> test<span class="token punctuation">(</span>test_loader<span class="token punctuation">)</span>
-            test_acc_hist<span class="token punctuation">.</span>append<span class="token punctuation">(</span>acc<span class="token punctuation">)</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Epoch {}, loss: {}, accuracy: {}'</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span> loss_hist<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> acc<span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-<span class="token keyword">def</span> <span class="token function">test</span><span class="token punctuation">(</span>val_load<span class="token punctuation">)</span><span class="token punctuation">:</span>
-    net<span class="token punctuation">.</span>eval<span class="token punctuation">(</span><span class="token punctuation">)</span>
-    total <span class="token operator">=</span> <span class="token number">0</span>
-    positive <span class="token operator">=</span> <span class="token number">0</span>
-    <span class="token keyword">for</span> val_x<span class="token punctuation">,</span> val_y <span class="token keyword">in</span> val_load<span class="token punctuation">:</span>
-        <span class="token keyword">if</span> use_cuda<span class="token punctuation">:</span>
-            val_x<span class="token punctuation">,</span> val_y <span class="token operator">=</span> val_x<span class="token punctuation">.</span>cuda<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> val_y<span class="token punctuation">.</span>cuda<span class="token punctuation">(</span><span class="token punctuation">)</span>
-        x <span class="token operator">=</span> Variable<span class="token punctuation">(</span>val_x<span class="token punctuation">)</span>
-        y <span class="token operator">=</span> Variable<span class="token punctuation">(</span>val_y<span class="token punctuation">)</span>
-        out <span class="token operator">=</span> net<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
-        <span class="token comment" spellcheck="true">#print(out.size())</span>
-        positive <span class="token operator">+=</span> <span class="token punctuation">(</span>torch<span class="token punctuation">.</span>max<span class="token punctuation">(</span>out<span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token operator">==</span>y<span class="token punctuation">)</span><span class="token punctuation">.</span>sum<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-        total <span class="token operator">+=</span> out<span class="token punctuation">.</span>size<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-    acc <span class="token operator">=</span>  <span class="token punctuation">(</span>positive<span class="token operator">*</span><span class="token number">100.0</span><span class="token punctuation">)</span><span class="token operator">/</span>total
-    <span class="token keyword">return</span> acc     
-
-train<span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">)</span>
-</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="im">from</span> resnet <span class="im">import</span> Resnet18</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">net <span class="op">=</span> Resnet18()</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">criterion <span class="op">=</span> nn.CrossEntropyLoss()</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb6-7" data-line-number="7"><span class="co">#Adam does not perform so good here</span></a>
+<a class="sourceLine" id="cb6-8" data-line-number="8">optimizer <span class="op">=</span> optim.SGD(net.parameters(), lr<span class="op">=</span><span class="fl">0.1</span>, momentum<span class="op">=</span><span class="fl">0.9</span>, weight_decay<span class="op">=</span><span class="fl">8e-4</span>, nesterov<span class="op">=</span> <span class="va">True</span>)</a>
+<a class="sourceLine" id="cb6-9" data-line-number="9">scheduler <span class="op">=</span> MultiStepLR(optimizer, [<span class="dv">100</span>,<span class="dv">150</span>], gamma<span class="op">=</span><span class="fl">0.1</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb7-1" data-line-number="1">use_cuda <span class="op">=</span> torch.cuda.is_available()</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"><span class="bu">print</span>(<span class="st">&#39;GPU </span><span class="sc">%s</span><span class="st"> available on this machine!&#39;</span> <span class="op">%</span>(<span class="st">&#39;is&#39;</span> <span class="cf">if</span> use_cuda <span class="cf">else</span> <span class="st">&#39;is not&#39;</span> ))</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4"><span class="cf">if</span> use_cuda:</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">    net.cuda()</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">    net <span class="op">=</span> torch.nn.DataParallel(net, device_ids<span class="op">=</span><span class="bu">range</span>(torch.cuda.device_count()))</a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">    cudnn.benchmark <span class="op">=</span> <span class="va">True</span></a>
+<a class="sourceLine" id="cb7-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb7-9" data-line-number="9"><span class="kw">def</span> train(epoch):</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10">    <span class="kw">global</span> train_data</a>
+<a class="sourceLine" id="cb7-11" data-line-number="11">    loss_hist <span class="op">=</span> []</a>
+<a class="sourceLine" id="cb7-12" data-line-number="12">    train_acc_hist <span class="op">=</span> []</a>
+<a class="sourceLine" id="cb7-13" data-line-number="13">    val_acc_hist <span class="op">=</span> []</a>
+<a class="sourceLine" id="cb7-14" data-line-number="14">    test_acc_hist <span class="op">=</span> []</a>
+<a class="sourceLine" id="cb7-15" data-line-number="15">    train_data<span class="op">=</span>{}</a>
+<a class="sourceLine" id="cb7-16" data-line-number="16">    train_data[<span class="st">&#39;loss_hist&#39;</span>] <span class="op">=</span> loss_hist</a>
+<a class="sourceLine" id="cb7-17" data-line-number="17">    train_data[<span class="st">&#39;train_acc_hist&#39;</span>] <span class="op">=</span> train_acc_hist</a>
+<a class="sourceLine" id="cb7-18" data-line-number="18">    train_data[<span class="st">&#39;val_acc_hist&#39;</span>] <span class="op">=</span>  val_acc_hist</a>
+<a class="sourceLine" id="cb7-19" data-line-number="19">    train_data[<span class="st">&#39;test_acc_hist&#39;</span>] <span class="op">=</span>  test_acc_hist</a>
+<a class="sourceLine" id="cb7-20" data-line-number="20">    </a>
+<a class="sourceLine" id="cb7-21" data-line-number="21">    </a>
+<a class="sourceLine" id="cb7-22" data-line-number="22">    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(epoch):</a>
+<a class="sourceLine" id="cb7-23" data-line-number="23">        <span class="bu">print</span>(<span class="st">&#39;This is epoch:</span><span class="sc">{}</span><span class="st">&#39;</span>.<span class="bu">format</span>(i<span class="op">+</span><span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb7-24" data-line-number="24">        total<span class="op">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb7-25" data-line-number="25">        correct<span class="op">=</span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb7-26" data-line-number="26">        scheduler.step()</a>
+<a class="sourceLine" id="cb7-27" data-line-number="27">        net.train()</a>
+<a class="sourceLine" id="cb7-28" data-line-number="28">        <span class="cf">for</span> j,(batch_x, batch_y) <span class="kw">in</span> <span class="bu">enumerate</span>(train_loader):</a>
+<a class="sourceLine" id="cb7-29" data-line-number="29">            optimizer.zero_grad()</a>
+<a class="sourceLine" id="cb7-30" data-line-number="30">            <span class="cf">if</span> use_cuda:</a>
+<a class="sourceLine" id="cb7-31" data-line-number="31">                batch_x, batch_y <span class="op">=</span> batch_x.cuda(), batch_y.cuda()</a>
+<a class="sourceLine" id="cb7-32" data-line-number="32">            x <span class="op">=</span> Variable(batch_x)</a>
+<a class="sourceLine" id="cb7-33" data-line-number="33">            y <span class="op">=</span> Variable(batch_y)</a>
+<a class="sourceLine" id="cb7-34" data-line-number="34">            out <span class="op">=</span> net(x)</a>
+<a class="sourceLine" id="cb7-35" data-line-number="35">            loss <span class="op">=</span> criterion(out, y)</a>
+<a class="sourceLine" id="cb7-36" data-line-number="36">            loss.backward()</a>
+<a class="sourceLine" id="cb7-37" data-line-number="37">            optimizer.step()</a>
+<a class="sourceLine" id="cb7-38" data-line-number="38">            </a>
+<a class="sourceLine" id="cb7-39" data-line-number="39">            _, predicted <span class="op">=</span> torch.<span class="bu">max</span>(out.data, <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb7-40" data-line-number="40">            total <span class="op">+=</span> y.size(<span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb7-41" data-line-number="41">            correct <span class="op">+=</span> predicted.eq(y.data).cpu().<span class="bu">sum</span>()</a>
+<a class="sourceLine" id="cb7-42" data-line-number="42">            progress_bar(j, <span class="bu">len</span>(train_loader), <span class="st">&#39;Loss: </span><span class="sc">%.3f</span><span class="st"> | Acc: </span><span class="sc">%.3f%%</span><span class="st"> (</span><span class="sc">%d</span><span class="st">/</span><span class="sc">%d</span><span class="st">)&#39;</span></a>
+<a class="sourceLine" id="cb7-43" data-line-number="43">                <span class="op">%</span> (loss.data[<span class="dv">0</span>], <span class="fl">100.</span><span class="op">*</span>correct<span class="op">/</span>total, correct, total))</a>
+<a class="sourceLine" id="cb7-44" data-line-number="44">            <span class="cf">if</span> j <span class="op">%</span> <span class="dv">50</span><span class="op">==</span><span class="dv">0</span>:</a>
+<a class="sourceLine" id="cb7-45" data-line-number="45">                loss_hist.append(loss.data[<span class="dv">0</span>])</a>
+<a class="sourceLine" id="cb7-46" data-line-number="46">            </a>
+<a class="sourceLine" id="cb7-47" data-line-number="47">        train_acc_hist.append(<span class="fl">100.</span><span class="op">*</span>correct<span class="op">/</span>total)</a>
+<a class="sourceLine" id="cb7-48" data-line-number="48">        <span class="cf">if</span> i <span class="op">%</span><span class="dv">1</span> <span class="op">==</span> <span class="dv">0</span>:</a>
+<a class="sourceLine" id="cb7-49" data-line-number="49">            acc <span class="op">=</span> test(val_loader)</a>
+<a class="sourceLine" id="cb7-50" data-line-number="50">            val_acc_hist.append(acc)</a>
+<a class="sourceLine" id="cb7-51" data-line-number="51">            <span class="bu">print</span>(<span class="st">&#39;Epoch </span><span class="sc">{}</span><span class="st">, loss: </span><span class="sc">{}</span><span class="st">, accuracy: </span><span class="sc">{}</span><span class="st">&#39;</span>.<span class="bu">format</span>(i<span class="op">+</span><span class="dv">1</span>, loss_hist[<span class="op">-</span><span class="dv">1</span>], acc))</a>
+<a class="sourceLine" id="cb7-52" data-line-number="52">            acc <span class="op">=</span> test(test_loader)</a>
+<a class="sourceLine" id="cb7-53" data-line-number="53">            test_acc_hist.append(acc)</a>
+<a class="sourceLine" id="cb7-54" data-line-number="54">            <span class="bu">print</span>(<span class="st">&#39;Epoch </span><span class="sc">{}</span><span class="st">, loss: </span><span class="sc">{}</span><span class="st">, accuracy: </span><span class="sc">{}</span><span class="st">&#39;</span>.<span class="bu">format</span>(i<span class="op">+</span><span class="dv">1</span>, loss_hist[<span class="op">-</span><span class="dv">1</span>], acc))</a>
+<a class="sourceLine" id="cb7-55" data-line-number="55">                </a>
+<a class="sourceLine" id="cb7-56" data-line-number="56"><span class="kw">def</span> test(val_load):</a>
+<a class="sourceLine" id="cb7-57" data-line-number="57">    net.<span class="bu">eval</span>()</a>
+<a class="sourceLine" id="cb7-58" data-line-number="58">    total <span class="op">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb7-59" data-line-number="59">    positive <span class="op">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb7-60" data-line-number="60">    <span class="cf">for</span> val_x, val_y <span class="kw">in</span> val_load:</a>
+<a class="sourceLine" id="cb7-61" data-line-number="61">        <span class="cf">if</span> use_cuda:</a>
+<a class="sourceLine" id="cb7-62" data-line-number="62">            val_x, val_y <span class="op">=</span> val_x.cuda(), val_y.cuda()</a>
+<a class="sourceLine" id="cb7-63" data-line-number="63">        x <span class="op">=</span> Variable(val_x)</a>
+<a class="sourceLine" id="cb7-64" data-line-number="64">        y <span class="op">=</span> Variable(val_y)</a>
+<a class="sourceLine" id="cb7-65" data-line-number="65">        out <span class="op">=</span> net(x)</a>
+<a class="sourceLine" id="cb7-66" data-line-number="66">        <span class="co">#print(out.size())</span></a>
+<a class="sourceLine" id="cb7-67" data-line-number="67">        positive <span class="op">+=</span> (torch.<span class="bu">max</span>(out,<span class="dv">1</span>)[<span class="dv">1</span>]<span class="op">==</span>y).<span class="bu">sum</span>().data[<span class="dv">0</span>]</a>
+<a class="sourceLine" id="cb7-68" data-line-number="68">        total <span class="op">+=</span> out.size()[<span class="dv">0</span>]</a>
+<a class="sourceLine" id="cb7-69" data-line-number="69">    acc <span class="op">=</span>  (positive<span class="op">*</span><span class="fl">100.0</span>)<span class="op">/</span>total</a>
+<a class="sourceLine" id="cb7-70" data-line-number="70">    <span class="cf">return</span> acc     </a>
+<a class="sourceLine" id="cb7-71" data-line-number="71"></a>
+<a class="sourceLine" id="cb7-72" data-line-number="72">train(<span class="dv">200</span>)</a></code></pre></div>
 <p>I use total 200 epoches. Thanks to the GPU, the training time for each epoch is merely 1.25 minutes, which is a drastically cut compared to almost 50 minutes via CPU. Then, I will try to visualise the whole training process and see what happens in the process.</p>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> pickle
-
-<span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'resnet18data.pkl'</span><span class="token punctuation">,</span><span class="token string">'wb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
-    pickle<span class="token punctuation">.</span>dump<span class="token punctuation">(</span>train_data<span class="token punctuation">,</span>f<span class="token punctuation">)</span>
-<span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'resnet18data.pkl'</span><span class="token punctuation">,</span> <span class="token string">'rb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
-    train_data <span class="token operator">=</span> pickle<span class="token punctuation">.</span>load<span class="token punctuation">(</span>f<span class="token punctuation">)</span>
-</code></pre>
-<pre class=" language-python"><code class="language-python">plt<span class="token punctuation">.</span>style<span class="token punctuation">.</span>use<span class="token punctuation">(</span><span class="token string">'seaborn-white'</span><span class="token punctuation">)</span>
-plt<span class="token punctuation">.</span>rc<span class="token punctuation">(</span><span class="token string">'font'</span><span class="token punctuation">,</span> size<span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">)</span>
-plt<span class="token punctuation">.</span>rc<span class="token punctuation">(</span><span class="token string">'axes'</span><span class="token punctuation">,</span> titlesize<span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">)</span>
-plt<span class="token punctuation">.</span>rc<span class="token punctuation">(</span><span class="token string">'axes'</span><span class="token punctuation">,</span> labelsize<span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">)</span>    <span class="token comment" spellcheck="true"># fontsize of the x and y labels</span>
-plt<span class="token punctuation">.</span>rc<span class="token punctuation">(</span><span class="token string">'xtick'</span><span class="token punctuation">,</span> labelsize<span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">)</span>    <span class="token comment" spellcheck="true"># fontsize of the tick labels</span>
-
-gs <span class="token operator">=</span> gridspec<span class="token punctuation">.</span>GridSpec<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span>
-gs<span class="token punctuation">.</span>update<span class="token punctuation">(</span>hspace<span class="token operator">=</span><span class="token number">0.5</span><span class="token punctuation">)</span>
-fig <span class="token operator">=</span> plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">16</span><span class="token punctuation">,</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-fig1 <span class="token operator">=</span> fig<span class="token punctuation">.</span>add_subplot<span class="token punctuation">(</span>gs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-fig2 <span class="token operator">=</span> fig<span class="token punctuation">.</span>add_subplot<span class="token punctuation">(</span>gs<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-fig1<span class="token punctuation">.</span>spines<span class="token punctuation">[</span><span class="token string">'right'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>set_visible<span class="token punctuation">(</span><span class="token boolean">False</span><span class="token punctuation">)</span>
-fig1<span class="token punctuation">.</span>spines<span class="token punctuation">[</span><span class="token string">'top'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>set_visible<span class="token punctuation">(</span><span class="token boolean">False</span><span class="token punctuation">)</span>
-<span class="token comment" spellcheck="true"># for item in [fig1.xaxis.label, fig1.yaxis.label,fig2.xaxis.label, fig2.yaxis.label]:</span>
-<span class="token comment" spellcheck="true">#     item.set_fontsize(10)</span>
-
-
-fig1<span class="token punctuation">.</span>plot<span class="token punctuation">(</span><span class="token punctuation">[</span>i <span class="token operator">*</span> <span class="token number">0.005</span> <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span>len<span class="token punctuation">(</span>train_data<span class="token punctuation">[</span><span class="token string">'loss_hist'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>train_data<span class="token punctuation">[</span><span class="token string">'loss_hist'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>color<span class="token operator">=</span><span class="token string">'black'</span><span class="token punctuation">)</span>
-fig1<span class="token punctuation">.</span>set<span class="token punctuation">(</span>title<span class="token operator">=</span> <span class="token string">'Loss trajectory of training'</span><span class="token punctuation">,</span>ylabel<span class="token operator">=</span><span class="token string">'Loss'</span><span class="token punctuation">,</span>xlabel<span class="token operator">=</span><span class="token string">'Iter.(1e4)'</span><span class="token punctuation">)</span>
-
-fig2<span class="token punctuation">.</span>plot<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">100</span><span class="token operator">-</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> train_data<span class="token punctuation">[</span><span class="token string">'train_acc_hist'</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span> color<span class="token operator">=</span><span class="token string">'red'</span><span class="token punctuation">,</span>linestyle<span class="token operator">=</span><span class="token string">'-.'</span><span class="token punctuation">,</span>label <span class="token operator">=</span> <span class="token string">'train'</span><span class="token punctuation">)</span>
-fig2<span class="token punctuation">.</span>plot<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">100</span><span class="token operator">-</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> train_data<span class="token punctuation">[</span><span class="token string">'test_acc_hist'</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span> color<span class="token operator">=</span><span class="token string">'blue'</span><span class="token punctuation">,</span>linestyle<span class="token operator">=</span><span class="token string">'-'</span><span class="token punctuation">,</span>label<span class="token operator">=</span><span class="token string">'test'</span><span class="token punctuation">)</span>
-fig2<span class="token punctuation">.</span>plot<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">100</span><span class="token operator">-</span>i <span class="token keyword">for</span> i <span class="token keyword">in</span> train_data<span class="token punctuation">[</span><span class="token string">'val_acc_hist'</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span> color<span class="token operator">=</span><span class="token string">'green'</span><span class="token punctuation">,</span>linestyle<span class="token operator">=</span><span class="token string">'-'</span><span class="token punctuation">,</span>label<span class="token operator">=</span><span class="token string">'val'</span><span class="token punctuation">)</span>
-fig2<span class="token punctuation">.</span>legend<span class="token punctuation">(</span>frameon<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
-fig2<span class="token punctuation">.</span>spines<span class="token punctuation">[</span><span class="token string">'right'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>set_visible<span class="token punctuation">(</span><span class="token boolean">False</span><span class="token punctuation">)</span>
-fig2<span class="token punctuation">.</span>spines<span class="token punctuation">[</span><span class="token string">'top'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>set_visible<span class="token punctuation">(</span><span class="token boolean">False</span><span class="token punctuation">)</span>
-fig2<span class="token punctuation">.</span>axhline<span class="token punctuation">(</span>y<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span>alpha<span class="token operator">=</span><span class="token number">0.5</span><span class="token punctuation">,</span> linestyle<span class="token operator">=</span><span class="token string">'--'</span><span class="token punctuation">,</span>color<span class="token operator">=</span><span class="token string">'k'</span><span class="token punctuation">,</span>linewidth<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
-fig2<span class="token punctuation">.</span>axhline<span class="token punctuation">(</span>y<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">,</span>alpha<span class="token operator">=</span><span class="token number">0.5</span><span class="token punctuation">,</span> linestyle<span class="token operator">=</span><span class="token string">'--'</span><span class="token punctuation">,</span>color<span class="token operator">=</span><span class="token string">'k'</span><span class="token punctuation">,</span>linewidth<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
-_<span class="token operator">=</span>fig2<span class="token punctuation">.</span>set<span class="token punctuation">(</span>title<span class="token operator">=</span> <span class="token string">'Top-1 Accuracy of Resnet18 on CIFAR-10'</span><span class="token punctuation">,</span>ylim<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">20</span><span class="token punctuation">)</span><span class="token punctuation">,</span>xlabel<span class="token operator">=</span><span class="token string">'Epoch'</span><span class="token punctuation">,</span>ylabel<span class="token operator">=</span><span class="token string">'Error(%)'</span><span class="token punctuation">)</span>
-<span class="token comment" spellcheck="true">#fig.plot()</span>
-</code></pre>
-<p><img src="main_files/main_11_0.png" alt="png"></p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="im">import</span> pickle</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb8-3" data-line-number="3"><span class="cf">with</span> <span class="bu">open</span>(<span class="st">&#39;resnet18data.pkl&#39;</span>,<span class="st">&#39;wb&#39;</span>) <span class="im">as</span> f:</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">    pickle.dump(train_data,f)</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5"><span class="cf">with</span> <span class="bu">open</span>(<span class="st">&#39;resnet18data.pkl&#39;</span>, <span class="st">&#39;rb&#39;</span>) <span class="im">as</span> f:</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">    train_data <span class="op">=</span> pickle.load(f)</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb9-1" data-line-number="1">plt.style.use(<span class="st">&#39;seaborn-white&#39;</span>)</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">plt.rc(<span class="st">&#39;font&#39;</span>, size<span class="op">=</span><span class="dv">20</span>)</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">plt.rc(<span class="st">&#39;axes&#39;</span>, titlesize<span class="op">=</span><span class="dv">20</span>)</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">plt.rc(<span class="st">&#39;axes&#39;</span>, labelsize<span class="op">=</span><span class="dv">20</span>)    <span class="co"># fontsize of the x and y labels</span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">plt.rc(<span class="st">&#39;xtick&#39;</span>, labelsize<span class="op">=</span><span class="dv">20</span>)    <span class="co"># fontsize of the tick labels</span></a>
+<a class="sourceLine" id="cb9-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">gs <span class="op">=</span> gridspec.GridSpec(<span class="dv">2</span>,<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">gs.update(hspace<span class="op">=</span><span class="fl">0.5</span>)</a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>(<span class="dv">16</span>,<span class="dv">10</span>))</a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">fig1 <span class="op">=</span> fig.add_subplot(gs[<span class="dv">0</span>,<span class="dv">0</span>])</a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">fig2 <span class="op">=</span> fig.add_subplot(gs[<span class="dv">1</span>,<span class="dv">0</span>])</a>
+<a class="sourceLine" id="cb9-12" data-line-number="12">fig1.spines[<span class="st">&#39;right&#39;</span>].set_visible(<span class="va">False</span>)</a>
+<a class="sourceLine" id="cb9-13" data-line-number="13">fig1.spines[<span class="st">&#39;top&#39;</span>].set_visible(<span class="va">False</span>)</a>
+<a class="sourceLine" id="cb9-14" data-line-number="14"><span class="co"># for item in [fig1.xaxis.label, fig1.yaxis.label,fig2.xaxis.label, fig2.yaxis.label]:</span></a>
+<a class="sourceLine" id="cb9-15" data-line-number="15"><span class="co">#     item.set_fontsize(10)</span></a>
+<a class="sourceLine" id="cb9-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb9-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb9-18" data-line-number="18">fig1.plot([i <span class="op">*</span> <span class="fl">0.005</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>,<span class="bu">len</span>(train_data[<span class="st">&#39;loss_hist&#39;</span>])<span class="op">+</span><span class="dv">1</span>)],train_data[<span class="st">&#39;loss_hist&#39;</span>],color<span class="op">=</span><span class="st">&#39;black&#39;</span>)</a>
+<a class="sourceLine" id="cb9-19" data-line-number="19">fig1.<span class="bu">set</span>(title<span class="op">=</span> <span class="st">&#39;Loss trajectory of training&#39;</span>,ylabel<span class="op">=</span><span class="st">&#39;Loss&#39;</span>,xlabel<span class="op">=</span><span class="st">&#39;Iter.(1e4)&#39;</span>)</a>
+<a class="sourceLine" id="cb9-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb9-21" data-line-number="21">fig2.plot([<span class="dv">100</span><span class="op">-</span>i <span class="cf">for</span> i <span class="kw">in</span> train_data[<span class="st">&#39;train_acc_hist&#39;</span>]], color<span class="op">=</span><span class="st">&#39;red&#39;</span>,linestyle<span class="op">=</span><span class="st">&#39;-.&#39;</span>,label <span class="op">=</span> <span class="st">&#39;train&#39;</span>)</a>
+<a class="sourceLine" id="cb9-22" data-line-number="22">fig2.plot([<span class="dv">100</span><span class="op">-</span>i <span class="cf">for</span> i <span class="kw">in</span> train_data[<span class="st">&#39;test_acc_hist&#39;</span>]], color<span class="op">=</span><span class="st">&#39;blue&#39;</span>,linestyle<span class="op">=</span><span class="st">&#39;-&#39;</span>,label<span class="op">=</span><span class="st">&#39;test&#39;</span>)</a>
+<a class="sourceLine" id="cb9-23" data-line-number="23">fig2.plot([<span class="dv">100</span><span class="op">-</span>i <span class="cf">for</span> i <span class="kw">in</span> train_data[<span class="st">&#39;val_acc_hist&#39;</span>]], color<span class="op">=</span><span class="st">&#39;green&#39;</span>,linestyle<span class="op">=</span><span class="st">&#39;-&#39;</span>,label<span class="op">=</span><span class="st">&#39;val&#39;</span>)</a>
+<a class="sourceLine" id="cb9-24" data-line-number="24">fig2.legend(frameon<span class="op">=</span><span class="va">True</span>)</a>
+<a class="sourceLine" id="cb9-25" data-line-number="25">fig2.spines[<span class="st">&#39;right&#39;</span>].set_visible(<span class="va">False</span>)</a>
+<a class="sourceLine" id="cb9-26" data-line-number="26">fig2.spines[<span class="st">&#39;top&#39;</span>].set_visible(<span class="va">False</span>)</a>
+<a class="sourceLine" id="cb9-27" data-line-number="27">fig2.axhline(y<span class="op">=</span>[<span class="dv">5</span>],alpha<span class="op">=</span><span class="fl">0.5</span>, linestyle<span class="op">=</span><span class="st">&#39;--&#39;</span>,color<span class="op">=</span><span class="st">&#39;k&#39;</span>,linewidth<span class="op">=</span><span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb9-28" data-line-number="28">fig2.axhline(y<span class="op">=</span>[<span class="dv">10</span>],alpha<span class="op">=</span><span class="fl">0.5</span>, linestyle<span class="op">=</span><span class="st">&#39;--&#39;</span>,color<span class="op">=</span><span class="st">&#39;k&#39;</span>,linewidth<span class="op">=</span><span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb9-29" data-line-number="29">_<span class="op">=</span>fig2.<span class="bu">set</span>(title<span class="op">=</span> <span class="st">&#39;Top-1 Accuracy of Resnet18 on CIFAR-10&#39;</span>,ylim<span class="op">=</span>(<span class="dv">0</span>,<span class="dv">20</span>),xlabel<span class="op">=</span><span class="st">&#39;Epoch&#39;</span>,ylabel<span class="op">=</span><span class="st">&#39;Error(%)&#39;</span>)</a>
+<a class="sourceLine" id="cb9-30" data-line-number="30"><span class="co">#fig.plot()</span></a></code></pre></div>
+<figure>
+<img src="main_files/main_11_0.png" alt="png"><figcaption>png</figcaption>
+</figure>
 <p>There are two things we need to pay attention to:</p>
-<ol>
-<li><p>The training process stagnates quickly after we adjust the learning rate, which indicates we can actually cut some training time after the adjustment and proceed without the loss of performance.</p>
-</li>
-<li><p>We can see that the both loss and error drop drastically after we decrease the learning rate by a factor of 0.1, it may tell us we can further improve the performance by adding more lr decreasing stage. Although the marginal gain is apparently decreasing as we can expect.</p>
-</li>
+<ol type="1">
+<li><p>The training process stagnates quickly after we adjust the learning rate, which indicates we can actually cut some training time after the adjustment and proceed without the loss of performance.</p></li>
+<li><p>We can see that the both loss and error drop drastically after we decrease the learning rate by a factor of 0.1, it may tell us we can further improve the performance by adding more lr decreasing stage. Although the marginal gain is apparently decreasing as we can expect.</p></li>
 </ol>
 <p>And interestingly, the model does not show a evident tendency to overfit the data after the second time we adjust the learning rate. Maybe part of the reason is the error rate is very close to zero in the last stage. So the classifier has no further space to improve and overfit the data. It also give use some hints that maybe we can increase the weight decay to make our network better!</p>
 <p>And next I will shed some light on the resnet-50 without actually running it.</p>

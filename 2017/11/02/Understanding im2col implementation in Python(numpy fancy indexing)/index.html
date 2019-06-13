@@ -96,18 +96,18 @@
 
 
 
-  <meta name="description" content="I see one of the im2col implement in Python  as following in the Assignment2 of CS231n:">
+  <meta name="description" content="I see one of the im2col implement in Python as following in the Assignment2 of CS231n:">
 <meta name="keywords" content="hexo">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Understanding im2col implementation in Python(numpy fancy indexing)">
 <meta property="og:url" content="http://fdsmlhn.github.io/2017/11/02/Understanding im2col implementation in Python(numpy fancy indexing)/index.html">
 <meta property="og:site_name" content="Nevermore">
-<meta property="og:description" content="I see one of the im2col implement in Python  as following in the Assignment2 of CS231n:">
+<meta property="og:description" content="I see one of the im2col implement in Python as following in the Assignment2 of CS231n:">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:updated_time" content="2017-11-04T19:20:41.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Understanding im2col implementation in Python(numpy fancy indexing)">
-<meta name="twitter:description" content="I see one of the im2col implement in Python  as following in the Assignment2 of CS231n:">
+<meta name="twitter:description" content="I see one of the im2col implement in Python as following in the Assignment2 of CS231n:">
 
 
 
@@ -430,144 +430,142 @@
 
       
         <hr>
-<p>I see one of the im2col implement in Python  as following in the Assignment2 of CS231n:<br><a id="more"></a></p>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">get_im2col_indices</span><span class="token punctuation">(</span>x_shape<span class="token punctuation">,</span> field_height<span class="token punctuation">,</span> field_width<span class="token punctuation">,</span> padding<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> stride<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token comment" spellcheck="true"># First figure out what the size of the output should be</span>
-    N<span class="token punctuation">,</span> C<span class="token punctuation">,</span> H<span class="token punctuation">,</span> W <span class="token operator">=</span> x_shape
-    <span class="token keyword">assert</span> <span class="token punctuation">(</span>H <span class="token operator">+</span> <span class="token number">2</span> <span class="token operator">*</span> padding <span class="token operator">-</span> field_height<span class="token punctuation">)</span> <span class="token operator">%</span> stride <span class="token operator">==</span> <span class="token number">0</span>
-    <span class="token keyword">assert</span> <span class="token punctuation">(</span>W <span class="token operator">+</span> <span class="token number">2</span> <span class="token operator">*</span> padding <span class="token operator">-</span> field_height<span class="token punctuation">)</span> <span class="token operator">%</span> stride <span class="token operator">==</span> <span class="token number">0</span>
-    out_height <span class="token operator">=</span> <span class="token punctuation">(</span>H <span class="token operator">+</span> <span class="token number">2</span> <span class="token operator">*</span> padding <span class="token operator">-</span> field_height<span class="token punctuation">)</span> <span class="token operator">/</span> stride <span class="token operator">+</span> <span class="token number">1</span>
-    out_width <span class="token operator">=</span> <span class="token punctuation">(</span>W <span class="token operator">+</span> <span class="token number">2</span> <span class="token operator">*</span> padding <span class="token operator">-</span> field_width<span class="token punctuation">)</span> <span class="token operator">/</span> stride <span class="token operator">+</span> <span class="token number">1</span>
-
-    i0 <span class="token operator">=</span> np<span class="token punctuation">.</span>repeat<span class="token punctuation">(</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span>field_height<span class="token punctuation">)</span><span class="token punctuation">,</span> field_width<span class="token punctuation">)</span>
-    i0 <span class="token operator">=</span> np<span class="token punctuation">.</span>tile<span class="token punctuation">(</span>i0<span class="token punctuation">,</span> C<span class="token punctuation">)</span>
-    i1 <span class="token operator">=</span> stride <span class="token operator">*</span> np<span class="token punctuation">.</span>repeat<span class="token punctuation">(</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span>out_height<span class="token punctuation">)</span><span class="token punctuation">,</span> out_width<span class="token punctuation">)</span>
-    j0 <span class="token operator">=</span> np<span class="token punctuation">.</span>tile<span class="token punctuation">(</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span>field_width<span class="token punctuation">)</span><span class="token punctuation">,</span> field_height <span class="token operator">*</span> C<span class="token punctuation">)</span>
-    j1 <span class="token operator">=</span> stride <span class="token operator">*</span> np<span class="token punctuation">.</span>tile<span class="token punctuation">(</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span>out_width<span class="token punctuation">)</span><span class="token punctuation">,</span> out_height<span class="token punctuation">)</span>
-    i <span class="token operator">=</span> i0<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">+</span> i1<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
-    j <span class="token operator">=</span> j0<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">+</span> j1<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
-
-    k <span class="token operator">=</span> np<span class="token punctuation">.</span>repeat<span class="token punctuation">(</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span>C<span class="token punctuation">)</span><span class="token punctuation">,</span> field_height <span class="token operator">*</span> field_width<span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
-
-    <span class="token keyword">return</span> <span class="token punctuation">(</span>k<span class="token punctuation">,</span> i<span class="token punctuation">,</span> j<span class="token punctuation">)</span>
-
-<span class="token keyword">def</span> <span class="token function">im2col_indices</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span> field_height<span class="token punctuation">,</span> field_width<span class="token punctuation">,</span> padding<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> stride<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-    <span class="token triple-quoted-string string">""" An implementation of im2col based on some fancy indexing """</span>
-    <span class="token comment" spellcheck="true"># Zero-pad the input</span>
-    p <span class="token operator">=</span> padding
-    x_padded <span class="token operator">=</span> np<span class="token punctuation">.</span>pad<span class="token punctuation">(</span>x<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>p<span class="token punctuation">,</span> p<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>p<span class="token punctuation">,</span> p<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> mode<span class="token operator">=</span><span class="token string">'constant'</span><span class="token punctuation">)</span>
-
-    k<span class="token punctuation">,</span> i<span class="token punctuation">,</span> j <span class="token operator">=</span> get_im2col_indices<span class="token punctuation">(</span>x<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> field_height<span class="token punctuation">,</span> field_width<span class="token punctuation">,</span> padding<span class="token punctuation">,</span>
-                                 stride<span class="token punctuation">)</span>
-
-    cols <span class="token operator">=</span> x_padded<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> k<span class="token punctuation">,</span> i<span class="token punctuation">,</span> j<span class="token punctuation">]</span>
-    C <span class="token operator">=</span> x<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
-    cols <span class="token operator">=</span> cols<span class="token punctuation">.</span>transpose<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>field_height <span class="token operator">*</span> field_width <span class="token operator">*</span> C<span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
-    <span class="token keyword">return</span> cols
-</code></pre>
-<p>Even if I’ve used Python for three years long, It is still something mindblowing for me to understand how it works at first! In order to understand the mechanism of this function. It’s time to learn more about the fancy indexing in the Python.</p>
+<p>I see one of the im2col implement in Python as following in the Assignment2 of CS231n: <a id="more"></a></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">def</span> get_im2col_indices(x_shape, field_height, field_width, padding<span class="op">=</span><span class="dv">1</span>, stride<span class="op">=</span><span class="dv">1</span>):</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="co"># First figure out what the size of the output should be</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">    N, C, H, W <span class="op">=</span> x_shape</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">    <span class="cf">assert</span> (H <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> padding <span class="op">-</span> field_height) <span class="op">%</span> stride <span class="op">==</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">    <span class="cf">assert</span> (W <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> padding <span class="op">-</span> field_height) <span class="op">%</span> stride <span class="op">==</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">    out_height <span class="op">=</span> (H <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> padding <span class="op">-</span> field_height) <span class="op">/</span> stride <span class="op">+</span> <span class="dv">1</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">    out_width <span class="op">=</span> (W <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> padding <span class="op">-</span> field_width) <span class="op">/</span> stride <span class="op">+</span> <span class="dv">1</span></a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">    i0 <span class="op">=</span> np.repeat(np.arange(field_height), field_width)</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">    i0 <span class="op">=</span> np.tile(i0, C)</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">    i1 <span class="op">=</span> stride <span class="op">*</span> np.repeat(np.arange(out_height), out_width)</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">    j0 <span class="op">=</span> np.tile(np.arange(field_width), field_height <span class="op">*</span> C)</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">    j1 <span class="op">=</span> stride <span class="op">*</span> np.tile(np.arange(out_width), out_height)</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14">    i <span class="op">=</span> i0.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>) <span class="op">+</span> i1.reshape(<span class="dv">1</span>, <span class="dv">-1</span>)</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15">    j <span class="op">=</span> j0.reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>) <span class="op">+</span> j1.reshape(<span class="dv">1</span>, <span class="dv">-1</span>)</a>
+<a class="sourceLine" id="cb1-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb1-17" data-line-number="17">    k <span class="op">=</span> np.repeat(np.arange(C), field_height <span class="op">*</span> field_width).reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb1-19" data-line-number="19">    <span class="cf">return</span> (k, i, j)</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="kw">def</span> im2col_indices(x, field_height, field_width, padding<span class="op">=</span><span class="dv">1</span>, stride<span class="op">=</span><span class="dv">1</span>):</a>
+<a class="sourceLine" id="cb1-22" data-line-number="22">    <span class="co">&quot;&quot;&quot; An implementation of im2col based on some fancy indexing &quot;&quot;&quot;</span></a>
+<a class="sourceLine" id="cb1-23" data-line-number="23">    <span class="co"># Zero-pad the input</span></a>
+<a class="sourceLine" id="cb1-24" data-line-number="24">    p <span class="op">=</span> padding</a>
+<a class="sourceLine" id="cb1-25" data-line-number="25">    x_padded <span class="op">=</span> np.pad(x, ((<span class="dv">0</span>, <span class="dv">0</span>), (<span class="dv">0</span>, <span class="dv">0</span>), (p, p), (p, p)), mode<span class="op">=</span><span class="st">&#39;constant&#39;</span>)</a>
+<a class="sourceLine" id="cb1-26" data-line-number="26"></a>
+<a class="sourceLine" id="cb1-27" data-line-number="27">    k, i, j <span class="op">=</span> get_im2col_indices(x.shape, field_height, field_width, padding,</a>
+<a class="sourceLine" id="cb1-28" data-line-number="28">                                 stride)</a>
+<a class="sourceLine" id="cb1-29" data-line-number="29"></a>
+<a class="sourceLine" id="cb1-30" data-line-number="30">    cols <span class="op">=</span> x_padded[:, k, i, j]</a>
+<a class="sourceLine" id="cb1-31" data-line-number="31">    C <span class="op">=</span> x.shape[<span class="dv">1</span>]</a>
+<a class="sourceLine" id="cb1-32" data-line-number="32">    cols <span class="op">=</span> cols.transpose(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">0</span>).reshape(field_height <span class="op">*</span> field_width <span class="op">*</span> C, <span class="dv">-1</span>)</a>
+<a class="sourceLine" id="cb1-33" data-line-number="33">    <span class="cf">return</span> cols</a></code></pre></div>
+<p>Even if I've used Python for three years long, It is still something mindblowing for me to understand how it works at first! In order to understand the mechanism of this function. It's time to learn more about the fancy indexing in the Python.</p>
 <p>When we implement the Backpropagation of Neural Network, we might see something like this to compute the final Loss function.</p>
-<pre class=" language-python"><code class="language-python">loss <span class="token operator">=</span> some_loss_fun<span class="token punctuation">(</span>scores<span class="token punctuation">[</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span>N<span class="token punctuation">)</span><span class="token punctuation">,</span> target_y<span class="token punctuation">]</span><span class="token punctuation">)</span>
-</code></pre>
-<p>We know it’s to extract the elements of according position out, the output will be (N,). At first you will tend to treat it as a small trick to memorize it and don’t care what’s going on hehind. But if you start to look at something like this, you will see this index can do things far beyond your thoughts(I also had no idea what it will give me before I ran this code:).)</p>
-<pre class=" language-python"><code class="language-python">In <span class="token punctuation">[</span><span class="token number">59</span><span class="token punctuation">]</span><span class="token punctuation">:</span> k <span class="token operator">=</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">24</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">)</span>
-
-In <span class="token punctuation">[</span><span class="token number">60</span><span class="token punctuation">]</span><span class="token punctuation">:</span> k
-Out<span class="token punctuation">[</span><span class="token number">60</span><span class="token punctuation">]</span><span class="token punctuation">:</span> 
-array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">0</span><span class="token punctuation">,</span>  <span class="token number">1</span><span class="token punctuation">,</span>  <span class="token number">2</span><span class="token punctuation">,</span>  <span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token punctuation">[</span> <span class="token number">4</span><span class="token punctuation">,</span>  <span class="token number">5</span><span class="token punctuation">,</span>  <span class="token number">6</span><span class="token punctuation">,</span>  <span class="token number">7</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token punctuation">[</span> <span class="token number">8</span><span class="token punctuation">,</span>  <span class="token number">9</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">11</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-
-       <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">12</span><span class="token punctuation">,</span> <span class="token number">13</span><span class="token punctuation">,</span> <span class="token number">14</span><span class="token punctuation">,</span> <span class="token number">15</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token punctuation">[</span><span class="token number">16</span><span class="token punctuation">,</span> <span class="token number">17</span><span class="token punctuation">,</span> <span class="token number">18</span><span class="token punctuation">,</span> <span class="token number">19</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token punctuation">[</span><span class="token number">20</span><span class="token punctuation">,</span> <span class="token number">21</span><span class="token punctuation">,</span> <span class="token number">22</span><span class="token punctuation">,</span> <span class="token number">23</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-
-In <span class="token punctuation">[</span><span class="token number">62</span><span class="token punctuation">]</span><span class="token punctuation">:</span> k<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">*</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">]</span>
-Out<span class="token punctuation">[</span><span class="token number">62</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
-array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">0</span><span class="token punctuation">,</span>  <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token punctuation">[</span> <span class="token number">0</span><span class="token punctuation">,</span>  <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-
-       <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">12</span><span class="token punctuation">,</span> <span class="token number">16</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-        <span class="token punctuation">[</span><span class="token number">12</span><span class="token punctuation">,</span> <span class="token number">17</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-</code></pre>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb2-1" data-line-number="1">loss <span class="op">=</span> some_loss_fun(scores[np.arange(N), target_y])</a></code></pre></div>
+<p>We know it's to extract the elements of according position out, the output will be (N,). At first you will tend to treat it as a small trick to memorize it and don't care what's going on hehind. But if you start to look at something like this, you will see this index can do things far beyond your thoughts(I also had no idea what it will give me before I ran this code:).)</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb3-1" data-line-number="1">In [<span class="dv">59</span>]: k <span class="op">=</span> np.arange(<span class="dv">24</span>).reshape(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>)</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">In [<span class="dv">60</span>]: k</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">Out[<span class="dv">60</span>]: </a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">array([[[ <span class="dv">0</span>,  <span class="dv">1</span>,  <span class="dv">2</span>,  <span class="dv">3</span>],</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">        [ <span class="dv">4</span>,  <span class="dv">5</span>,  <span class="dv">6</span>,  <span class="dv">7</span>],</a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">        [ <span class="dv">8</span>,  <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>]],</a>
+<a class="sourceLine" id="cb3-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">       [[<span class="dv">12</span>, <span class="dv">13</span>, <span class="dv">14</span>, <span class="dv">15</span>],</a>
+<a class="sourceLine" id="cb3-10" data-line-number="10">        [<span class="dv">16</span>, <span class="dv">17</span>, <span class="dv">18</span>, <span class="dv">19</span>],</a>
+<a class="sourceLine" id="cb3-11" data-line-number="11">        [<span class="dv">20</span>, <span class="dv">21</span>, <span class="dv">22</span>, <span class="dv">23</span>]]])</a>
+<a class="sourceLine" id="cb3-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb3-13" data-line-number="13">In [<span class="dv">62</span>]: k[:,np.arange(<span class="dv">2</span>),np.arange(<span class="dv">2</span>).reshape(<span class="op">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="op">*</span> np.arange(<span class="dv">2</span>) ]</a>
+<a class="sourceLine" id="cb3-14" data-line-number="14">Out[<span class="dv">62</span>]:</a>
+<a class="sourceLine" id="cb3-15" data-line-number="15">array([[[ <span class="dv">0</span>,  <span class="dv">4</span>],</a>
+<a class="sourceLine" id="cb3-16" data-line-number="16">        [ <span class="dv">0</span>,  <span class="dv">5</span>]],</a>
+<a class="sourceLine" id="cb3-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb3-18" data-line-number="18">       [[<span class="dv">12</span>, <span class="dv">16</span>],</a>
+<a class="sourceLine" id="cb3-19" data-line-number="19">        [<span class="dv">12</span>, <span class="dv">17</span>]]])</a></code></pre></div>
 <p>Actually at the beginning this fancy indexing, Python will try to broadcast the indexing arrays into the same dimension, And a small <strong>caveat</strong> here, broadcasting will always first look for trailing dimensions. In our example, np.arange(2) in this second dimension after broadcasting will become the left one instead of the right one.</p>
-<pre class=" language-python"><code class="language-python"><span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">0</span><span class="token punctuation">,</span>  <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span>  right!       <span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">0</span><span class="token punctuation">,</span>  <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token comment" spellcheck="true">#wrong!</span>
- <span class="token punctuation">[</span> <span class="token number">0</span><span class="token punctuation">,</span>  <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span>                <span class="token punctuation">[</span> <span class="token number">1</span><span class="token punctuation">,</span>  <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
-</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb4-1" data-line-number="1">[[ <span class="dv">0</span>,  <span class="dv">1</span>],  right<span class="op">!</span>       [[ <span class="dv">0</span>,  <span class="dv">0</span>], <span class="co">#wrong!</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"> [ <span class="dv">0</span>,  <span class="dv">1</span>]]                [ <span class="dv">1</span>,  <span class="dv">1</span>]] </a></code></pre></div>
 <p>And then, it will extract the correspond elements as we might think. Eventually the think will like the outcome we run above.</p>
 <p>While writing this, I also find a interesting example in the document of numpy to demonstrate the magic of broadcast. If you have more interest in it. Please click <a href="https://docs.scipy.org/doc/numpy-1.13.0/user/basics.broadcasting.html#general-broadcasting-rules" target="_blank" rel="noopener">here</a>.</p>
-<pre class=" language-python"><code class="language-python">A      <span class="token punctuation">(</span><span class="token number">4d</span> array<span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token number">8</span> x <span class="token number">1</span> x <span class="token number">6</span> x <span class="token number">1</span>
-B      <span class="token punctuation">(</span><span class="token number">3d</span> array<span class="token punctuation">)</span><span class="token punctuation">:</span>      <span class="token number">7</span> x <span class="token number">1</span> x <span class="token number">5</span>
-Result <span class="token punctuation">(</span><span class="token number">4d</span> array<span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token number">8</span> x <span class="token number">7</span> x <span class="token number">6</span> x <span class="token number">5</span>
-</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb5-1" data-line-number="1">A      (4d array):  <span class="dv">8</span> x <span class="dv">1</span> x <span class="dv">6</span> x <span class="dv">1</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">B      (3d array):      <span class="dv">7</span> x <span class="dv">1</span> x <span class="dv">5</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">Result (4d array):  <span class="dv">8</span> x <span class="dv">7</span> x <span class="dv">6</span> x <span class="dv">5</span></a></code></pre></div>
 <p>Besides, we need to see : is sort of special in the indexing, which means the outcome of these two piece of code will be different.</p>
-<pre class=" language-python"><code class="language-python">In <span class="token punctuation">[</span><span class="token number">77</span><span class="token punctuation">]</span><span class="token punctuation">:</span> k<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">,</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">*</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">]</span> <span class="token comment" spellcheck="true">#This will give a matrix of shape(2,3,2,2)</span>
-Out<span class="token punctuation">[</span><span class="token number">77</span><span class="token punctuation">]</span><span class="token punctuation">:</span> 
-array <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">0</span><span class="token punctuation">,</span>  <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-         <span class="token punctuation">[</span> <span class="token number">0</span><span class="token punctuation">,</span>  <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-
-        <span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">4</span><span class="token punctuation">,</span>  <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-         <span class="token punctuation">[</span> <span class="token number">4</span><span class="token punctuation">,</span>  <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-
-        <span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">8</span><span class="token punctuation">,</span>  <span class="token number">8</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-         <span class="token punctuation">[</span> <span class="token number">8</span><span class="token punctuation">,</span>  <span class="token number">9</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-
-
-       <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">12</span><span class="token punctuation">,</span> <span class="token number">12</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-         <span class="token punctuation">[</span><span class="token number">12</span><span class="token punctuation">,</span> <span class="token number">13</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-
-        <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">16</span><span class="token punctuation">,</span> <span class="token number">16</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-         <span class="token punctuation">[</span><span class="token number">16</span><span class="token punctuation">,</span> <span class="token number">17</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-
-        <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">20</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-         <span class="token punctuation">[</span><span class="token number">20</span><span class="token punctuation">,</span> <span class="token number">21</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-In <span class="token punctuation">[</span><span class="token number">78</span><span class="token punctuation">]</span><span class="token punctuation">:</span> k<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">*</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">]</span> <span class="token comment" spellcheck="true">#this will give you an error because it can not broadcast properly.</span>
-</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb6-1" data-line-number="1">In [<span class="dv">77</span>]: k[:,:,np.arange(<span class="dv">2</span>).reshape(<span class="op">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="op">*</span> np.arange(<span class="dv">2</span>) ] <span class="co">#This will give a matrix of shape(2,3,2,2)</span></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">Out[<span class="dv">77</span>]: </a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">array [[[[ <span class="dv">0</span>,  <span class="dv">0</span>],</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">         [ <span class="dv">0</span>,  <span class="dv">1</span>]],</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">        [[ <span class="dv">4</span>,  <span class="dv">4</span>],</a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">         [ <span class="dv">4</span>,  <span class="dv">5</span>]],</a>
+<a class="sourceLine" id="cb6-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb6-9" data-line-number="9">        [[ <span class="dv">8</span>,  <span class="dv">8</span>],</a>
+<a class="sourceLine" id="cb6-10" data-line-number="10">         [ <span class="dv">8</span>,  <span class="dv">9</span>]]],</a>
+<a class="sourceLine" id="cb6-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb6-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb6-13" data-line-number="13">       [[[<span class="dv">12</span>, <span class="dv">12</span>],</a>
+<a class="sourceLine" id="cb6-14" data-line-number="14">         [<span class="dv">12</span>, <span class="dv">13</span>]],</a>
+<a class="sourceLine" id="cb6-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb6-16" data-line-number="16">        [[<span class="dv">16</span>, <span class="dv">16</span>],</a>
+<a class="sourceLine" id="cb6-17" data-line-number="17">         [<span class="dv">16</span>, <span class="dv">17</span>]],</a>
+<a class="sourceLine" id="cb6-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb6-19" data-line-number="19">        [[<span class="dv">20</span>, <span class="dv">20</span>],</a>
+<a class="sourceLine" id="cb6-20" data-line-number="20">         [<span class="dv">20</span>, <span class="dv">21</span>]]]])</a>
+<a class="sourceLine" id="cb6-21" data-line-number="21">In [<span class="dv">78</span>]: k[:,np.arange(<span class="dv">3</span>),np.arange(<span class="dv">2</span>).reshape(<span class="op">-</span><span class="dv">1</span>,<span class="dv">1</span>) <span class="op">*</span> np.arange(<span class="dv">2</span>) ] <span class="co">#this will give you an error because it can not broadcast properly.</span></a></code></pre></div>
 <p>With this thorough understanding of Python Fancy Indexing, we will go back and see the intricated implement of im2col.</p>
 <p>We first need to examine the dimension of these three outcome indices</p>
-<p>k is of shape (C <em> field_height </em> field_width, 1)<br>i is of shape (C <em> field_height </em> field_width, out_height<em>out_width)<br>j is of shape (C </em> field_height <em> field_width, out_height</em>out_width)</p>
-<p>So when we use index in <code>x_padded[:, k, i, j]</code>, we are extract out a matrix of 3-D (N, C <em> field_height </em> field_width, out_height<em>out_width), the broadcasted index matrix is of dimension (C </em> field_height <em> field_width, out_height</em>out_width). Remember each neuron in filters in CNN will generally have C <em> field_height </em> field_width weight on it.</p>
-<p>Now it might be clearlier for you to see what’s going on here. We will take the first slice of index matrix (C <em> field_height </em> field_width, 1), which give you the outcome of first neuron to guide you the whole process. There will be out_height*out_width neurons in a single filter</p>
+<p>k is of shape (C * field_height * field_width, 1) i is of shape (C * field_height * field_width, out_height<em>out_width) j is of shape (C </em> field_height * field_width, out_height*out_width)</p>
+<p>So when we use index in <code>x_padded[:, k, i, j]</code>, we are extract out a matrix of 3-D (N, C * field_height * field_width, out_height<em>out_width), the broadcasted index matrix is of dimension (C </em> field_height * field_width, out_height<em>out_width). Remember each neuron in filters in CNN will generally have C </em> field_height * field_width weight on it.</p>
+<p>Now it might be clearlier for you to see what's going on here. We will take the first slice of index matrix (C * field_height * field_width, 1), which give you the outcome of first neuron to guide you the whole process. There will be out_height*out_width neurons in a single filter</p>
 <p>I will refer to second, third, fourth dimension of x(image) as C, H, W position.</p>
-<ol>
+<ol type="1">
 <li>The index in the C position tries to traverse different channel, for each channel, there will be field_height * field_width numbers to be used, which indicates how many pixel every neuron try to capture in a single channel. Index will look like this:</li>
 </ol>
-<p>$$<br>\underbrace{\underbrace{c,\dots,c}_{length\ of\ F_H * F_W } }_{c\ =\ 0,\dots,C-1}<br>$$</p>
-<ol>
+<p><span class="math display">\[
+\underbrace{\underbrace{c,\dots,c}_{length\ of\ F\_H * F\_W } }_{c\ =\ 0,\dots,C-1}
+\]</span></p>
+<ol start="2" type="1">
 <li>The index in the H channel is try to traverse the height of each position in the neural. Due to the fact the implementation will get width-side pixel first. so it will have index like:</li>
 </ol>
-<p>$$<br>\underbrace{\underbrace{0,\dots,0}_{length\ of\ F_W},\dots, \underbrace{F_H-1,\dots,F_H-1}_{length\ of\ F_W} }_{rep\ for\ C\ times}<br>$$</p>
-<ol>
+<p><span class="math display">\[
+\underbrace{\underbrace{0,\dots,0}_{length\ of\ F\_W},\dots, \underbrace{F\_H-1,\dots,F\_H-1}_{length\ of\ F\_W} }_{rep\ for\ C\ times}
+\]</span></p>
+<ol start="3" type="1">
 <li>Accordingly,The index in the W channel looks like this:</li>
 </ol>
-<p>$$<br>\underbrace{\underbrace{0,1, \dots,F_W-1}_{F_H\ times}}_{rep\ for\ C\ times}<br>$$</p>
+<p><span class="math display">\[
+\underbrace{\underbrace{0,1, \dots,F\_W-1}_{F\_H\ times}}_{rep\ for\ C\ times}
+\]</span></p>
 <p>The <code>i1</code>, <code>j1</code> in function<code>get_im2col_indices</code> is used to tuned the width and height index positionS according to different neurons. Because we also traverse width side first for all neurons in each filter, so we use <code>np.tile</code> for <code>j1</code>(row), <code>np.repeat</code> for <code>i1</code>(column).</p>
 <p>By the way, Python always operates first on trailing dimensions. For instance, the reshape will first spread out or gather the row-side in 2-D array:</p>
-<pre class=" language-python"><code class="language-python">In <span class="token punctuation">[</span><span class="token number">84</span><span class="token punctuation">]</span><span class="token punctuation">:</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>list<span class="token punctuation">(</span>range<span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">)</span>
-Out<span class="token punctuation">[</span><span class="token number">84</span><span class="token punctuation">]</span><span class="token punctuation">:</span> 
-array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">0</span><span class="token punctuation">,</span>  <span class="token number">1</span><span class="token punctuation">,</span>  <span class="token number">2</span><span class="token punctuation">,</span>  <span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-       <span class="token punctuation">[</span> <span class="token number">4</span><span class="token punctuation">,</span>  <span class="token number">5</span><span class="token punctuation">,</span>  <span class="token number">6</span><span class="token punctuation">,</span>  <span class="token number">7</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-       <span class="token punctuation">[</span> <span class="token number">8</span><span class="token punctuation">,</span>  <span class="token number">9</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">11</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true">#instead of </span>
-array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span> <span class="token number">0</span><span class="token punctuation">,</span>  <span class="token number">3</span><span class="token punctuation">,</span>  <span class="token number">6</span><span class="token punctuation">,</span>  <span class="token number">9</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-       <span class="token punctuation">[</span> <span class="token number">1</span><span class="token punctuation">,</span>  <span class="token number">4</span><span class="token punctuation">,</span>  <span class="token number">7</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-       <span class="token punctuation">[</span> <span class="token number">2</span><span class="token punctuation">,</span>  <span class="token number">5</span><span class="token punctuation">,</span>  <span class="token number">8</span><span class="token punctuation">,</span> <span class="token number">11</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb7-1" data-line-number="1">In [<span class="dv">84</span>]: np.array(<span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">12</span>))).reshape(<span class="dv">3</span>,<span class="dv">4</span>)</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">Out[<span class="dv">84</span>]: </a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">array([[ <span class="dv">0</span>,  <span class="dv">1</span>,  <span class="dv">2</span>,  <span class="dv">3</span>],</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">       [ <span class="dv">4</span>,  <span class="dv">5</span>,  <span class="dv">6</span>,  <span class="dv">7</span>],</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">       [ <span class="dv">8</span>,  <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>]])</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="co">#instead of </span></a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">array([[ <span class="dv">0</span>,  <span class="dv">3</span>,  <span class="dv">6</span>,  <span class="dv">9</span>],</a>
+<a class="sourceLine" id="cb7-9" data-line-number="9">       [ <span class="dv">1</span>,  <span class="dv">4</span>,  <span class="dv">7</span>, <span class="dv">10</span>],</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10">       [ <span class="dv">2</span>,  <span class="dv">5</span>,  <span class="dv">8</span>, <span class="dv">11</span>]])</a></code></pre></div>
 <p>Bonus Part: Some tricks regarding numpy I found accidentally:</p>
-<ol>
+<ol type="1">
 <li>You can use index None to add one more dimension to your np.array with ease. But be careful, the newly created object still get reference to the original one. Revising one will change another!</li>
 </ol>
-<pre class=" language-python"><code class="language-python">In <span class="token punctuation">[</span><span class="token number">91</span><span class="token punctuation">]</span><span class="token punctuation">:</span> x<span class="token punctuation">.</span>shape
-Out<span class="token punctuation">[</span><span class="token number">91</span><span class="token punctuation">]</span><span class="token punctuation">:</span> <span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span>
-
-In <span class="token punctuation">[</span><span class="token number">92</span><span class="token punctuation">]</span><span class="token punctuation">:</span> x<span class="token punctuation">[</span>None<span class="token punctuation">]</span><span class="token punctuation">.</span>shape
-Out<span class="token punctuation">[</span><span class="token number">92</span><span class="token punctuation">]</span><span class="token punctuation">:</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span>
-</code></pre>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb8-1" data-line-number="1">In [<span class="dv">91</span>]: x.shape</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">Out[<span class="dv">91</span>]: (<span class="dv">3</span>, <span class="dv">6</span>)</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">In [<span class="dv">92</span>]: x[<span class="va">None</span>].shape</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">Out[<span class="dv">92</span>]: (<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">6</span>)</a></code></pre></div>
 <p>(To be continued)</p>
 <hr>
-<p>f you find any mistakes in this passage, feel free to contact me through my email: FDSM_lhn@yahoo.com. </p>
-<p>You’re welcome to share my passage to other websites or bloggers. <strong>But please add my name and link to this post alongside</strong>. Thank you!</p>
+<p>f you find any mistakes in this passage, feel free to contact me through my email: FDSM_lhn@yahoo.com.</p>
+<p>You're welcome to share my passage to other websites or bloggers. <strong>But please add my name and link to this post alongside</strong>. Thank you!</p>
 
       
     </div>

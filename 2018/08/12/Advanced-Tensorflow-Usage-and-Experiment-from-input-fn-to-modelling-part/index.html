@@ -96,18 +96,18 @@
 
 
 
-  <meta name="description" content="BackgroundWhile I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a sho">
+  <meta name="description" content="Background While I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a sh">
 <meta name="keywords" content="Machine Learning; Coding; 旅行见闻！">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Advanced Tensorflow Usage and Experiment: from input_fn to modelling part">
 <meta property="og:url" content="http://fdsmlhn.github.io/2018/08/12/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/index.html">
 <meta property="og:site_name" content="Nevermore">
-<meta property="og:description" content="BackgroundWhile I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a sho">
+<meta property="og:description" content="Background While I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a sh">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:updated_time" content="2018-08-12T12:42:12.697Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Advanced Tensorflow Usage and Experiment: from input_fn to modelling part">
-<meta name="twitter:description" content="BackgroundWhile I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a sho">
+<meta name="twitter:description" content="Background While I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a sh">
 
 
 
@@ -418,471 +418,474 @@
 
       
         <hr>
-<h2 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h2><p>While I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a short period of time , which was really painful experience for me. So I want to share this blog with you to ease your pain.<br><a id="more"></a></p>
-<h2 id="Some-complaints"><a href="#Some-complaints" class="headerlink" title="Some complaints"></a>Some complaints</h2><p>Although I have to admit Tensorflow is a very powerful computing framework: it has much stronger and larger community to support it compared with Pytorch; it allows you to get accees to some fancy, high-level attributes like tf.serving, tensorboard, distributed computation, etc, it has very steep learning curve and be super extra unfriendly to new users because of its rapid shift of version. Maybe you are first struggled with tf.placeholder version of data preprocessing and modelling and suddenly you find out it’s not how we use it anymore, how would you feel then? Well, if it’s the first blog you see, you know what i mean in a few hours…</p>
-<h2 id="What’s-exactly-in-this-blog"><a href="#What’s-exactly-in-this-blog" class="headerlink" title="What’s exactly in this blog"></a>What’s exactly in this blog</h2><p>In this blog I present most of experiments I did while writing the LSTM model code with Tensorflow version 1.9 and Python 3.6. I split my toy experiments into 4 parts: </p>
+<h2 id="background">Background</h2>
+<p>While I interned at my current company - Kuaishou, I was in part of the project where I need to set up a LSTM model, and I have to transfer my skill sets to Tensorflow from Pytorch in a short period of time , which was really painful experience for me. So I want to share this blog with you to ease your pain. <a id="more"></a></p>
+<h2 id="some-complaints">Some complaints</h2>
+<p>Although I have to admit Tensorflow is a very powerful computing framework: it has much stronger and larger community to support it compared with Pytorch; it allows you to get accees to some fancy, high-level attributes like tf.serving, tensorboard, distributed computation, etc, it has very steep learning curve and be super extra unfriendly to new users because of its rapid shift of version. Maybe you are first struggled with tf.placeholder version of data preprocessing and modelling and suddenly you find out it's not how we use it anymore, how would you feel then? Well, if it's the first blog you see, you know what i mean in a few hours...</p>
+<h2 id="whats-exactly-in-this-blog">What's exactly in this blog</h2>
+<p>In this blog I present most of experiments I did while writing the LSTM model code with Tensorflow version 1.9 and Python 3.6. I split my toy experiments into 4 parts:</p>
 <ul>
 <li>data input process</li>
 <li>LSTM cell test</li>
 <li>Shared embedding test</li>
 <li>Miscellany function</li>
 </ul>
-<h2 id="Who-should-read-this-blog"><a href="#Who-should-read-this-blog" class="headerlink" title="Who should read this blog"></a>Who should read this blog</h2><p>You should already get some taste of the tensorflow and want to know more detailed and useful knowledge without writing these toy examples yourself. I’m very confident these functions or tests will be helpful if you are dealing with high volumn of data and want to format your code neatly.</p>
-<h1 id="data-input-process"><a href="#data-input-process" class="headerlink" title="data input process"></a>data input process</h1><h2 id="tfrecord-saving-reading"><a href="#tfrecord-saving-reading" class="headerlink" title="tfrecord saving, reading"></a>tfrecord saving, reading</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf 
-<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
-
-<span class="token keyword">def</span> <span class="token function">writedata</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-xlist <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">8</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">23</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
-xstar_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">15</span><span class="token punctuation">,</span> <span class="token number">25</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">23.1</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
-ylist <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span>
-<span class="token comment" spellcheck="true">#name_list = [['a'.encode('utf8'), 'b'.encode('utf8')], ['a'.encode('utf8'), 'c'.encode('utf8'), 'd'.encode('utf8')]]</span>
-name_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'b'</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token string">'b'</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
-
-writer <span class="token operator">=</span> tf<span class="token punctuation">.</span>python_io<span class="token punctuation">.</span>TFRecordWriter<span class="token punctuation">(</span><span class="token string">"train.tfrecords"</span><span class="token punctuation">)</span>
-<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-x <span class="token operator">=</span> xlist<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
-y <span class="token operator">=</span> ylist<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
-x_star <span class="token operator">=</span> xstar_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
-name <span class="token operator">=</span> name_list<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
-example <span class="token operator">=</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Example<span class="token punctuation">(</span>features<span class="token operator">=</span>tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Features<span class="token punctuation">(</span>feature<span class="token operator">=</span><span class="token punctuation">{</span>
-<span class="token string">"y"</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Feature<span class="token punctuation">(</span>int64_list<span class="token operator">=</span>tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Int64List<span class="token punctuation">(</span>value<span class="token operator">=</span><span class="token punctuation">[</span>y<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-<span class="token string">'x'</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Feature<span class="token punctuation">(</span>int64_list<span class="token operator">=</span>tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Int64List<span class="token punctuation">(</span>value<span class="token operator">=</span>x<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-<span class="token string">'x_star'</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Feature<span class="token punctuation">(</span>float_list<span class="token operator">=</span>tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>FloatList<span class="token punctuation">(</span>value<span class="token operator">=</span>x_star<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-<span class="token string">'name_star'</span><span class="token punctuation">:</span>tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>Feature<span class="token punctuation">(</span>bytes_list<span class="token operator">=</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>BytesList<span class="token punctuation">(</span>value<span class="token operator">=</span> name<span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-writer<span class="token punctuation">.</span>write<span class="token punctuation">(</span>example<span class="token punctuation">.</span>SerializeToString<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-writer<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-writedata<span class="token punctuation">(</span><span class="token punctuation">)</span>
-</code></pre>
-<h2 id="Experiment"><a href="#Experiment" class="headerlink" title="Experiment"></a>Experiment</h2><ol>
-<li>sparse tensor can be used in embedding layer directly，it will ignore default value and also won’t be count into denominator when the <code>combiner</code> is mean</li>
-<li>sparse_tensor_to_dense must have corresponding type of default_value to it’s own data type ，like int,float can use 0 as default value, while tf.string has to be str,e.g. ‘0’.</li>
+<h2 id="who-should-read-this-blog">Who should read this blog</h2>
+<p>You should already get some taste of the tensorflow and want to know more detailed and useful knowledge without writing these toy examples yourself. I'm very confident these functions or tests will be helpful if you are dealing with high volumn of data and want to format your code neatly.</p>
+<h1 id="data-input-process">data input process</h1>
+<h2 id="tfrecord-saving-reading">tfrecord saving, reading</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="im">import</span> tensorflow <span class="im">as</span> tf </a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="im">import</span> numpy <span class="im">as</span> np</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="kw">def</span> writedata():</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">xlist <span class="op">=</span> [[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">8</span>],[<span class="dv">23</span>,<span class="dv">1</span>]]</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">xstar_list <span class="op">=</span> [[<span class="dv">15</span>, <span class="dv">25</span>],[<span class="fl">23.1</span>],[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]]</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">ylist <span class="op">=</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="co">#name_list = [[&#39;a&#39;.encode(&#39;utf8&#39;), &#39;b&#39;.encode(&#39;utf8&#39;)], [&#39;a&#39;.encode(&#39;utf8&#39;), &#39;c&#39;.encode(&#39;utf8&#39;), &#39;d&#39;.encode(&#39;utf8&#39;)]]</span></a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">name_list <span class="op">=</span> [[<span class="st">&#39;a&#39;</span>.encode(<span class="st">&#39;utf8&#39;</span>), <span class="st">&#39;b&#39;</span>.encode(<span class="st">&#39;utf8&#39;</span>)], [<span class="st">&#39;a&#39;</span>.encode(<span class="st">&#39;utf8&#39;</span>)],[<span class="st">&#39;b&#39;</span>.encode(<span class="st">&#39;utf8&#39;</span>)]]</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">writer <span class="op">=</span> tf.python_io.TFRecordWriter(<span class="st">&quot;train.tfrecords&quot;</span>)</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12"><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">x <span class="op">=</span> xlist[i]</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14">y <span class="op">=</span> ylist[i]</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15">x_star <span class="op">=</span> xstar_list[i]</a>
+<a class="sourceLine" id="cb1-16" data-line-number="16">name <span class="op">=</span> name_list[i]</a>
+<a class="sourceLine" id="cb1-17" data-line-number="17">example <span class="op">=</span> tf.train.Example(features<span class="op">=</span>tf.train.Features(feature<span class="op">=</span>{</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18"><span class="st">&quot;y&quot;</span>: tf.train.Feature(int64_list<span class="op">=</span>tf.train.Int64List(value<span class="op">=</span>[y])),</a>
+<a class="sourceLine" id="cb1-19" data-line-number="19"><span class="st">&#39;x&#39;</span>: tf.train.Feature(int64_list<span class="op">=</span>tf.train.Int64List(value<span class="op">=</span>x)),</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20"><span class="st">&#39;x_star&#39;</span>: tf.train.Feature(float_list<span class="op">=</span>tf.train.FloatList(value<span class="op">=</span>x_star)),</a>
+<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="st">&#39;name_star&#39;</span>:tf.train.Feature(bytes_list<span class="op">=</span> tf.train.BytesList(value<span class="op">=</span> name))</a>
+<a class="sourceLine" id="cb1-22" data-line-number="22"></a>
+<a class="sourceLine" id="cb1-23" data-line-number="23">}))</a>
+<a class="sourceLine" id="cb1-24" data-line-number="24">writer.write(example.SerializeToString())</a>
+<a class="sourceLine" id="cb1-25" data-line-number="25">writer.close()</a>
+<a class="sourceLine" id="cb1-26" data-line-number="26"></a>
+<a class="sourceLine" id="cb1-27" data-line-number="27">writedata()</a></code></pre></div>
+<h2 id="experiment">Experiment</h2>
+<ol type="1">
+<li>sparse tensor can be used in embedding layer directly，it will ignore default value and also won't be count into denominator when the <code>combiner</code> is mean</li>
+<li>sparse_tensor_to_dense must have corresponding type of default_value to it's own data type ，like int,float can use 0 as default value, while tf.string has to be str,e.g. '0'.</li>
 <li>If you use tf.dataset.batch, and have various length data, then you should use parse_example instead of parse_single_example</li>
 <li>tf.pad can also pad outer dimension, which means increase a layer of zero outside your data</li>
 </ol>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf 
-<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
-
-
-<span class="token keyword">def</span> <span class="token function">my_input_fn</span><span class="token punctuation">(</span>file_path<span class="token punctuation">,</span> perform_shuffle<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> repeat_count<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-<span class="token keyword">def</span> <span class="token function">parse</span><span class="token punctuation">(</span>example_proto<span class="token punctuation">)</span><span class="token punctuation">:</span>
-features <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"x"</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>VarLenFeature<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>int64<span class="token punctuation">)</span><span class="token punctuation">,</span>
-<span class="token string">"x_star"</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>VarLenFeature<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">)</span><span class="token punctuation">,</span>
-<span class="token string">'name_star'</span><span class="token punctuation">:</span>tf<span class="token punctuation">.</span>VarLenFeature<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>string<span class="token punctuation">)</span><span class="token punctuation">,</span>
-<span class="token string">"y"</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>FixedLenFeature<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> tf<span class="token punctuation">.</span>int64<span class="token punctuation">)</span><span class="token punctuation">}</span>
-parsed_features <span class="token operator">=</span> tf<span class="token punctuation">.</span>parse_example<span class="token punctuation">(</span>example_proto<span class="token punctuation">,</span> features<span class="token punctuation">)</span>
-x <span class="token operator">=</span> tf<span class="token punctuation">.</span>sparse_tensor_to_dense<span class="token punctuation">(</span>parsed_features<span class="token punctuation">[</span><span class="token string">"x"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-x <span class="token operator">=</span> tf<span class="token punctuation">.</span>cast<span class="token punctuation">(</span>x<span class="token punctuation">,</span> tf<span class="token punctuation">.</span>int32<span class="token punctuation">)</span>
-
-parsed_features<span class="token punctuation">[</span><span class="token string">'x'</span><span class="token punctuation">]</span> <span class="token operator">=</span> x
-parsed_features<span class="token punctuation">[</span><span class="token string">'x_star'</span><span class="token punctuation">]</span> <span class="token operator">=</span> tf<span class="token punctuation">.</span>sparse_tensor_to_dense<span class="token punctuation">(</span>parsed_features<span class="token punctuation">[</span><span class="token string">"x_star"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-parsed_features<span class="token punctuation">[</span><span class="token string">'name_star'</span><span class="token punctuation">]</span> <span class="token operator">=</span> tf<span class="token punctuation">.</span>sparse_tensor_to_dense<span class="token punctuation">(</span>parsed_features<span class="token punctuation">[</span><span class="token string">"name_star"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> default_value<span class="token operator">=</span> <span class="token string">'0'</span><span class="token punctuation">)</span>
-
-y <span class="token operator">=</span> tf<span class="token punctuation">.</span>cast<span class="token punctuation">(</span>parsed_features<span class="token punctuation">[</span><span class="token string">"y"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> tf<span class="token punctuation">.</span>int32<span class="token punctuation">)</span>
-<span class="token keyword">return</span> parsed_features<span class="token punctuation">,</span> y
-
-
-dataset <span class="token operator">=</span> tf<span class="token punctuation">.</span>data<span class="token punctuation">.</span>TFRecordDataset<span class="token punctuation">(</span>file_path<span class="token punctuation">)</span><span class="token punctuation">.</span>batch<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
-dataset<span class="token operator">=</span> dataset<span class="token punctuation">.</span>map<span class="token punctuation">(</span>parse<span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true">#dataset = (tf.data.TFRecordDataset(file_path).batch(2).map(parse))</span>
-<span class="token keyword">if</span> perform_shuffle<span class="token punctuation">:</span>
-dataset <span class="token operator">=</span> dataset<span class="token punctuation">.</span>shuffle<span class="token punctuation">(</span>buffer_size<span class="token operator">=</span><span class="token number">256</span><span class="token punctuation">)</span>
-dataset <span class="token operator">=</span> dataset<span class="token punctuation">.</span>repeat<span class="token punctuation">(</span>repeat_count<span class="token punctuation">)</span>
-<span class="token comment" spellcheck="true">#dataset = dataset.padded_batch(2, padded_shapes=({'x':[6]},[1]))  #batch size为2，并且x按maxlen=6来做padding</span>
-<span class="token comment" spellcheck="true">#dataset = dataset.padded_batch(2, padded_shapes=dataset.output_shapes)  #batch size为2，并且x按maxlen=6来做padding</span>
-
-iterator <span class="token operator">=</span> dataset<span class="token punctuation">.</span>make_one_shot_iterator<span class="token punctuation">(</span><span class="token punctuation">)</span>
-batch_features<span class="token punctuation">,</span> batch_labels <span class="token operator">=</span> iterator<span class="token punctuation">.</span>get_next<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token keyword">return</span> batch_features<span class="token punctuation">,</span> batch_labels
-
-next_batch <span class="token operator">=</span> my_input_fn<span class="token punctuation">(</span><span class="token string">'train.tfrecords'</span><span class="token punctuation">,</span> <span class="token boolean">True</span><span class="token punctuation">)</span>
-
-
-<span class="token comment" spellcheck="true">##test embedding </span>
-feat_columns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>       <span class="token comment" spellcheck="true">#feat_columns must be iterable datatype </span>
-feat_columns<span class="token punctuation">.</span>append<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>numeric_column<span class="token punctuation">(</span><span class="token string">'x'</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">)</span>       <span class="token comment" spellcheck="true">#0</span>
-feat_columns<span class="token punctuation">.</span>append<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>numeric_column<span class="token punctuation">(</span><span class="token string">'x_star'</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>   <span class="token comment" spellcheck="true">#1</span>
-
-
-embed_info <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_vocabulary_list<span class="token punctuation">(</span>
-<span class="token string">'name_star'</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">,</span><span class="token string">'b'</span><span class="token punctuation">,</span><span class="token string">'c'</span><span class="token punctuation">,</span><span class="token string">'d'</span><span class="token punctuation">,</span><span class="token string">'e'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> default_value<span class="token operator">=</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span>
-dtype<span class="token operator">=</span>tf<span class="token punctuation">.</span>string<span class="token punctuation">,</span> num_oov_buckets<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span>
-
-name_tensor<span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>embedding_column<span class="token punctuation">(</span>embed_info<span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> combiner<span class="token operator">=</span><span class="token string">'mean'</span><span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true">#feat_columns.append(tf.feature_column.shared_embedding_columns([embed_info], dimension =32)[0])</span>
-<span class="token comment" spellcheck="true">#feat_columns.append(tf.feature_column.embedding_column(embed_info, dimension =32))      #2</span>
-</code></pre>
-<pre class=" language-python"><code class="language-python">op<span class="token operator">=</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>input_layer<span class="token punctuation">(</span>next_batch<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>feature_columns<span class="token operator">=</span>name_tensor<span class="token punctuation">)</span>
-<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
-<span class="token comment" spellcheck="true">#sess.run(init)</span>
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>tables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token punctuation">[</span>op<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-xs<span class="token punctuation">,</span> y <span class="token operator">=</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>next_batch<span class="token punctuation">)</span>        
-<span class="token comment" spellcheck="true">#print(sess.run([tf.feature_column.input_layer(xs,feature_columns=[name_tensor])]))</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>size<span class="token punctuation">(</span>xs<span class="token punctuation">[</span><span class="token string">'x'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 2*4  batch_size 2</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'x: '</span><span class="token punctuation">,</span> xs<span class="token punctuation">[</span><span class="token string">'x'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'x_star: '</span><span class="token punctuation">,</span> xs<span class="token punctuation">[</span><span class="token string">'x_star'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'y:'</span><span class="token punctuation">,</span> y<span class="token punctuation">)</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'testing pad for lstm'</span><span class="token punctuation">)</span>
-<span class="token comment" spellcheck="true">#print(sess.run(tf.pad(xs['x'],tf.constant([[0,0],[0,0]], dtype=tf.int32))))</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'testing feature columns for lstm'</span><span class="token punctuation">)</span>
-<span class="token comment" spellcheck="true">#print(sess.run(tf.feature_column.input_layer(xs,feature_columns=feat_columns[0])))</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'testing string feature columns'</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>xs<span class="token punctuation">[</span><span class="token string">'name_star'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token comment" spellcheck="true">#print(feat_columns[2])</span>
-<span class="token comment" spellcheck="true">#print(sess.run([op]))</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span>xs<span class="token punctuation">[</span><span class="token string">'x'</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>xs<span class="token punctuation">[</span><span class="token string">'x'</span><span class="token punctuation">]</span><span class="token punctuation">[</span>range<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>y<span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>size<span class="token punctuation">(</span>y<span class="token punctuation">)</span><span class="token punctuation">)</span>
-</code></pre>
-<p>[array([[ 0.29952478, -0.02905731, -0.14833574, -0.25489837,  0.13668409],<br>[ 0.36393905, -0.18847883,  0.01317748,  0.02921137, -0.3228819 ],<br>[ 0.20875314, -0.471264  , -0.23475473, -0.10564104, -0.1293019 ]],<br>dtype=float32)]<br>12<br>x:  [[ 1  2  3  0]<br>[ 4  5  6  8]<br>[23  1  0  0]]<br>x_star:  [[15.  25.   0. ]<br>[23.1  0.   0. ]<br>[ 1.   2.   3. ]]<br>y: [[1]<br>[2]<br>[3]]<br>testing pad for lstm<br>testing feature columns for lstm<br>testing string feature columns<br>[[b’a’ b’b’]<br>[b’a’ b’0’]<br>[b’b’ b’0’]]<br>[4 5 6 8]<br>[2 6]</p>
-<p><class 'numpy.ndarray'><br>3</class></p>
-<h1 id="Tensorflow-LSTM-CELL"><a href="#Tensorflow-LSTM-CELL" class="headerlink" title="Tensorflow LSTM CELL"></a>Tensorflow LSTM CELL</h1><h2 id="Single-cell-case"><a href="#Single-cell-case" class="headerlink" title="Single cell case"></a>Single cell case</h2><p>test the output of LSTM cell</p>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf
-<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
-<span class="token keyword">from</span> tensorflow<span class="token punctuation">.</span>contrib <span class="token keyword">import</span> rnn
-tf<span class="token punctuation">.</span>reset_default_graph<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true"># Create input data</span>
-X <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true"># The second example is of length 6 </span>
-X<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>   <span class="token comment" spellcheck="true"># 2D: include all third dimension</span>
-X_lengths <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">]</span>
-
-cell <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>rnn_cell<span class="token punctuation">.</span>LSTMCell<span class="token punctuation">(</span>num_units<span class="token operator">=</span><span class="token number">64</span><span class="token punctuation">,</span> state_is_tuple<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
-
-init_state <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">64</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">#batch_size * hidden_state_size</span>
-init_s <span class="token operator">=</span>  tf<span class="token punctuation">.</span>contrib<span class="token punctuation">.</span>rnn<span class="token punctuation">.</span>LSTMStateTuple<span class="token punctuation">(</span>c<span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>init_state<span class="token punctuation">)</span><span class="token punctuation">,</span> h<span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>init_state<span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-
-outputs<span class="token punctuation">,</span> states  <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>dynamic_rnn<span class="token punctuation">(</span>cell<span class="token operator">=</span>cell<span class="token punctuation">,</span>
-dtype<span class="token operator">=</span>tf<span class="token punctuation">.</span>float64<span class="token punctuation">,</span>
-initial_state <span class="token operator">=</span> init_s<span class="token punctuation">,</span>
-sequence_length<span class="token operator">=</span>X_lengths<span class="token punctuation">,</span>
-inputs<span class="token operator">=</span>X<span class="token punctuation">)</span>
-
-
-<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-output_val<span class="token punctuation">,</span> state_val <span class="token operator">=</span> sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token punctuation">[</span>outputs<span class="token punctuation">,</span> states<span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>output_val<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>state_val<span class="token punctuation">.</span>c<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
-
-
-
-
-<span class="token keyword">assert</span> outputs<span class="token punctuation">.</span>shape <span class="token operator">==</span> <span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">64</span><span class="token punctuation">)</span>
-<span class="token comment" spellcheck="true"># the final outputs state and states returned must be equal for each      </span>
-<span class="token comment" spellcheck="true"># sequence</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>outputs<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true">#all ten outputs of two samples</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>states<span class="token punctuation">)</span>   <span class="token comment" spellcheck="true">#cell states and hidden units: all two sequence state output of two trajectory</span>
-</code></pre>
-<p>(2, 10, 64)<br>(2, 64)<br>Tensor(“rnn/transpose_1:0”, shape=(2, 10, 64), dtype=float64)<br>LSTMStateTuple(c=<tf.tensor 'rnn while exit_3:0' shape="(2," 64) dtype="float64">, h=<tf.tensor 'rnn while exit_4:0' shape="(2," 64) dtype="float64">)</tf.tensor></tf.tensor></p>
-<h2 id="Multicell-case"><a href="#Multicell-case" class="headerlink" title="Multicell case"></a>Multicell case</h2><pre class=" language-python"><code class="language-python">tf<span class="token punctuation">.</span>reset_default_graph<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true">#cell = tf.nn.rnn_cell.LSTMCell(num_units=64, state_is_tuple=True)</span>
-multi_cell <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>rnn_cell<span class="token punctuation">.</span>MultiRNNCell<span class="token punctuation">(</span><span class="token punctuation">[</span>tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>rnn_cell<span class="token punctuation">.</span>LSTMCell<span class="token punctuation">(</span>num_units<span class="token operator">=</span><span class="token number">64</span><span class="token punctuation">,</span> state_is_tuple<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">,</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>rnn_cell<span class="token punctuation">.</span>LSTMCell<span class="token punctuation">(</span>num_units<span class="token operator">=</span><span class="token number">64</span><span class="token punctuation">,</span> state_is_tuple<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-
-init_state <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">64</span><span class="token punctuation">)</span>
-init_s <span class="token operator">=</span>  tf<span class="token punctuation">.</span>contrib<span class="token punctuation">.</span>rnn<span class="token punctuation">.</span>LSTMStateTuple<span class="token punctuation">(</span>c<span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>init_state<span class="token punctuation">)</span><span class="token punctuation">,</span> h<span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>init_state<span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-
-outputs<span class="token punctuation">,</span> states  <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>dynamic_rnn<span class="token punctuation">(</span>cell<span class="token operator">=</span>multi_cell<span class="token punctuation">,</span>
-dtype<span class="token operator">=</span>tf<span class="token punctuation">.</span>float64<span class="token punctuation">,</span>
-initial_state <span class="token operator">=</span> <span class="token punctuation">(</span>init_s<span class="token punctuation">,</span> init_s<span class="token punctuation">)</span><span class="token punctuation">,</span>
-sequence_length<span class="token operator">=</span>X_lengths<span class="token punctuation">,</span>
-inputs<span class="token operator">=</span>X<span class="token punctuation">)</span>
-
-
-<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-a<span class="token operator">=</span> sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>X<span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-output_val<span class="token punctuation">,</span> state_val <span class="token operator">=</span> sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token punctuation">[</span>outputs<span class="token punctuation">,</span> states<span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>output_val<span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>output_val<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Something related to StateTuple'</span><span class="token punctuation">)</span>
-</code></pre>
-<p><class 'numpy.ndarray'><br>(2, 9, 64)<br>Something related to StateTuple</class></p>
-<h1 id="fast-predict"><a href="#fast-predict" class="headerlink" title="fast predict"></a>fast predict</h1><h2 id="tensorflow-fast-predict"><a href="#tensorflow-fast-predict" class="headerlink" title="tensorflow fast predict"></a>tensorflow fast predict</h2><p>use generator to keep .predict open</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="im">import</span> tensorflow <span class="im">as</span> tf </a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="im">import</span> numpy <span class="im">as</span> np</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5"><span class="kw">def</span> my_input_fn(file_path, perform_shuffle<span class="op">=</span><span class="va">False</span>, repeat_count<span class="op">=</span><span class="dv">10</span>):</a>
+<a class="sourceLine" id="cb2-6" data-line-number="6"><span class="kw">def</span> parse(example_proto):</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7">features <span class="op">=</span> {<span class="st">&quot;x&quot;</span>: tf.VarLenFeature(tf.int64),</a>
+<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="st">&quot;x_star&quot;</span>: tf.VarLenFeature(tf.float32),</a>
+<a class="sourceLine" id="cb2-9" data-line-number="9"><span class="st">&#39;name_star&#39;</span>:tf.VarLenFeature(tf.string),</a>
+<a class="sourceLine" id="cb2-10" data-line-number="10"><span class="st">&quot;y&quot;</span>: tf.FixedLenFeature([<span class="dv">1</span>], tf.int64)}</a>
+<a class="sourceLine" id="cb2-11" data-line-number="11">parsed_features <span class="op">=</span> tf.parse_example(example_proto, features)</a>
+<a class="sourceLine" id="cb2-12" data-line-number="12">x <span class="op">=</span> tf.sparse_tensor_to_dense(parsed_features[<span class="st">&quot;x&quot;</span>])</a>
+<a class="sourceLine" id="cb2-13" data-line-number="13">x <span class="op">=</span> tf.cast(x, tf.int32)</a>
+<a class="sourceLine" id="cb2-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb2-15" data-line-number="15">parsed_features[<span class="st">&#39;x&#39;</span>] <span class="op">=</span> x</a>
+<a class="sourceLine" id="cb2-16" data-line-number="16">parsed_features[<span class="st">&#39;x_star&#39;</span>] <span class="op">=</span> tf.sparse_tensor_to_dense(parsed_features[<span class="st">&quot;x_star&quot;</span>])</a>
+<a class="sourceLine" id="cb2-17" data-line-number="17">parsed_features[<span class="st">&#39;name_star&#39;</span>] <span class="op">=</span> tf.sparse_tensor_to_dense(parsed_features[<span class="st">&quot;name_star&quot;</span>], default_value<span class="op">=</span> <span class="st">&#39;0&#39;</span>)</a>
+<a class="sourceLine" id="cb2-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb2-19" data-line-number="19">y <span class="op">=</span> tf.cast(parsed_features[<span class="st">&quot;y&quot;</span>], tf.int32)</a>
+<a class="sourceLine" id="cb2-20" data-line-number="20"><span class="cf">return</span> parsed_features, y</a>
+<a class="sourceLine" id="cb2-21" data-line-number="21"></a>
+<a class="sourceLine" id="cb2-22" data-line-number="22"></a>
+<a class="sourceLine" id="cb2-23" data-line-number="23">dataset <span class="op">=</span> tf.data.TFRecordDataset(file_path).batch(<span class="dv">3</span>)</a>
+<a class="sourceLine" id="cb2-24" data-line-number="24">dataset<span class="op">=</span> dataset.<span class="bu">map</span>(parse)</a>
+<a class="sourceLine" id="cb2-25" data-line-number="25"></a>
+<a class="sourceLine" id="cb2-26" data-line-number="26"><span class="co">#dataset = (tf.data.TFRecordDataset(file_path).batch(2).map(parse))</span></a>
+<a class="sourceLine" id="cb2-27" data-line-number="27"><span class="cf">if</span> perform_shuffle:</a>
+<a class="sourceLine" id="cb2-28" data-line-number="28">dataset <span class="op">=</span> dataset.shuffle(buffer_size<span class="op">=</span><span class="dv">256</span>)</a>
+<a class="sourceLine" id="cb2-29" data-line-number="29">dataset <span class="op">=</span> dataset.repeat(repeat_count)</a>
+<a class="sourceLine" id="cb2-30" data-line-number="30"><span class="co">#dataset = dataset.padded_batch(2, padded_shapes=({&#39;x&#39;:[6]},[1]))  #batch size为2，并且x按maxlen=6来做padding</span></a>
+<a class="sourceLine" id="cb2-31" data-line-number="31"><span class="co">#dataset = dataset.padded_batch(2, padded_shapes=dataset.output_shapes)  #batch size为2，并且x按maxlen=6来做padding</span></a>
+<a class="sourceLine" id="cb2-32" data-line-number="32"></a>
+<a class="sourceLine" id="cb2-33" data-line-number="33">iterator <span class="op">=</span> dataset.make_one_shot_iterator()</a>
+<a class="sourceLine" id="cb2-34" data-line-number="34">batch_features, batch_labels <span class="op">=</span> iterator.get_next()</a>
+<a class="sourceLine" id="cb2-35" data-line-number="35"><span class="cf">return</span> batch_features, batch_labels</a>
+<a class="sourceLine" id="cb2-36" data-line-number="36"></a>
+<a class="sourceLine" id="cb2-37" data-line-number="37">next_batch <span class="op">=</span> my_input_fn(<span class="st">&#39;train.tfrecords&#39;</span>, <span class="va">True</span>)</a>
+<a class="sourceLine" id="cb2-38" data-line-number="38"></a>
+<a class="sourceLine" id="cb2-39" data-line-number="39"></a>
+<a class="sourceLine" id="cb2-40" data-line-number="40"><span class="co">##test embedding </span></a>
+<a class="sourceLine" id="cb2-41" data-line-number="41">feat_columns <span class="op">=</span> []       <span class="co">#feat_columns must be iterable datatype </span></a>
+<a class="sourceLine" id="cb2-42" data-line-number="42">feat_columns.append(tf.feature_column.numeric_column(<span class="st">&#39;x&#39;</span>, <span class="dv">4</span>))       <span class="co">#0</span></a>
+<a class="sourceLine" id="cb2-43" data-line-number="43">feat_columns.append(tf.feature_column.numeric_column(<span class="st">&#39;x_star&#39;</span>,<span class="dv">2</span>))   <span class="co">#1</span></a>
+<a class="sourceLine" id="cb2-44" data-line-number="44"></a>
+<a class="sourceLine" id="cb2-45" data-line-number="45"></a>
+<a class="sourceLine" id="cb2-46" data-line-number="46">embed_info <span class="op">=</span> tf.feature_column.categorical_column_with_vocabulary_list(</a>
+<a class="sourceLine" id="cb2-47" data-line-number="47"><span class="st">&#39;name_star&#39;</span>,</a>
+<a class="sourceLine" id="cb2-48" data-line-number="48">[<span class="st">&#39;a&#39;</span>,<span class="st">&#39;b&#39;</span>,<span class="st">&#39;c&#39;</span>,<span class="st">&#39;d&#39;</span>,<span class="st">&#39;e&#39;</span>], default_value<span class="op">=-</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb2-49" data-line-number="49">dtype<span class="op">=</span>tf.string, num_oov_buckets<span class="op">=</span><span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb2-50" data-line-number="50"></a>
+<a class="sourceLine" id="cb2-51" data-line-number="51">name_tensor<span class="op">=</span> tf.feature_column.embedding_column(embed_info, <span class="dv">5</span>, combiner<span class="op">=</span><span class="st">&#39;mean&#39;</span>)</a>
+<a class="sourceLine" id="cb2-52" data-line-number="52"></a>
+<a class="sourceLine" id="cb2-53" data-line-number="53"><span class="co">#feat_columns.append(tf.feature_column.shared_embedding_columns([embed_info], dimension =32)[0])</span></a>
+<a class="sourceLine" id="cb2-54" data-line-number="54"><span class="co">#feat_columns.append(tf.feature_column.embedding_column(embed_info, dimension =32))      #2</span></a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb3-1" data-line-number="1">op<span class="op">=</span>tf.feature_column.input_layer(next_batch[<span class="dv">0</span>],feature_columns<span class="op">=</span>name_tensor)</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="cf">with</span> tf.Session() <span class="im">as</span> sess:</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="co">#sess.run(init)</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">sess.run(tf.global_variables_initializer())</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">sess.run(tf.tables_initializer())</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6"><span class="bu">print</span>(sess.run([op]))</a>
+<a class="sourceLine" id="cb3-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb3-8" data-line-number="8">sess.run(tf.global_variables_initializer())</a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">xs, y <span class="op">=</span>sess.run(next_batch)        </a>
+<a class="sourceLine" id="cb3-10" data-line-number="10"><span class="co">#print(sess.run([tf.feature_column.input_layer(xs,feature_columns=[name_tensor])]))</span></a>
+<a class="sourceLine" id="cb3-11" data-line-number="11"><span class="bu">print</span>(np.size(xs[<span class="st">&#39;x&#39;</span>])) <span class="co"># 2*4  batch_size 2</span></a>
+<a class="sourceLine" id="cb3-12" data-line-number="12"><span class="bu">print</span>(<span class="st">&#39;x: &#39;</span>, xs[<span class="st">&#39;x&#39;</span>])</a>
+<a class="sourceLine" id="cb3-13" data-line-number="13"><span class="bu">print</span>(<span class="st">&#39;x_star: &#39;</span>, xs[<span class="st">&#39;x_star&#39;</span>])</a>
+<a class="sourceLine" id="cb3-14" data-line-number="14"><span class="bu">print</span>(<span class="st">&#39;y:&#39;</span>, y)</a>
+<a class="sourceLine" id="cb3-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb3-16" data-line-number="16"><span class="bu">print</span>(<span class="st">&#39;testing pad for lstm&#39;</span>)</a>
+<a class="sourceLine" id="cb3-17" data-line-number="17"><span class="co">#print(sess.run(tf.pad(xs[&#39;x&#39;],tf.constant([[0,0],[0,0]], dtype=tf.int32))))</span></a>
+<a class="sourceLine" id="cb3-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb3-19" data-line-number="19"><span class="bu">print</span>(<span class="st">&#39;testing feature columns for lstm&#39;</span>)</a>
+<a class="sourceLine" id="cb3-20" data-line-number="20"><span class="co">#print(sess.run(tf.feature_column.input_layer(xs,feature_columns=feat_columns[0])))</span></a>
+<a class="sourceLine" id="cb3-21" data-line-number="21"></a>
+<a class="sourceLine" id="cb3-22" data-line-number="22"><span class="bu">print</span>(<span class="st">&#39;testing string feature columns&#39;</span>)</a>
+<a class="sourceLine" id="cb3-23" data-line-number="23"><span class="bu">print</span>(xs[<span class="st">&#39;name_star&#39;</span>])</a>
+<a class="sourceLine" id="cb3-24" data-line-number="24"><span class="co">#print(feat_columns[2])</span></a>
+<a class="sourceLine" id="cb3-25" data-line-number="25"><span class="co">#print(sess.run([op]))</span></a>
+<a class="sourceLine" id="cb3-26" data-line-number="26"></a>
+<a class="sourceLine" id="cb3-27" data-line-number="27"><span class="bu">print</span>(np.squeeze(xs[<span class="st">&#39;x&#39;</span>][<span class="dv">1</span>]))</a>
+<a class="sourceLine" id="cb3-28" data-line-number="28"><span class="bu">print</span>(xs[<span class="st">&#39;x&#39;</span>][<span class="bu">range</span>(<span class="dv">2</span>),[<span class="dv">1</span>,<span class="dv">2</span>]])</a>
+<a class="sourceLine" id="cb3-29" data-line-number="29"><span class="bu">print</span>(<span class="bu">type</span>(y))</a>
+<a class="sourceLine" id="cb3-30" data-line-number="30"><span class="bu">print</span>(np.size(y))</a></code></pre></div>
+<p>[array([[ 0.29952478, -0.02905731, -0.14833574, -0.25489837, 0.13668409], [ 0.36393905, -0.18847883, 0.01317748, 0.02921137, -0.3228819 ], [ 0.20875314, -0.471264 , -0.23475473, -0.10564104, -0.1293019 ]], dtype=float32)] 12 x: [[ 1 2 3 0] [ 4 5 6 8] [23 1 0 0]] x_star: [[15. 25. 0. ] [23.1 0. 0. ] [ 1. 2. 3. ]] y: [[1] [2] [3]] testing pad for lstm testing feature columns for lstm testing string feature columns [[b'a' b'b'] [b'a' b'0'] [b'b' b'0']] [4 5 6 8] [2 6] &lt;class 'numpy.ndarray'&gt; 3</p>
+<h1 id="tensorflow-lstm-cell">Tensorflow LSTM CELL</h1>
+<h2 id="single-cell-case">Single cell case</h2>
+<p>test the output of LSTM cell</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="im">import</span> tensorflow <span class="im">as</span> tf</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="im">import</span> numpy <span class="im">as</span> np</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="im">from</span> tensorflow.contrib <span class="im">import</span> rnn</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">tf.reset_default_graph()</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6"><span class="co"># Create input data</span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">X <span class="op">=</span> np.random.randn(<span class="dv">2</span>, <span class="dv">10</span>, <span class="dv">8</span>)</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb4-9" data-line-number="9"><span class="co"># The second example is of length 6 </span></a>
+<a class="sourceLine" id="cb4-10" data-line-number="10">X[<span class="dv">1</span>,<span class="dv">6</span>:] <span class="op">=</span> <span class="dv">0</span>   <span class="co"># 2D: include all third dimension</span></a>
+<a class="sourceLine" id="cb4-11" data-line-number="11">X_lengths <span class="op">=</span> [<span class="dv">10</span>, <span class="dv">6</span>]</a>
+<a class="sourceLine" id="cb4-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb4-13" data-line-number="13">cell <span class="op">=</span> tf.nn.rnn_cell.LSTMCell(num_units<span class="op">=</span><span class="dv">64</span>, state_is_tuple<span class="op">=</span><span class="va">True</span>)</a>
+<a class="sourceLine" id="cb4-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb4-15" data-line-number="15">init_state <span class="op">=</span> np.random.randn(<span class="dv">2</span>, <span class="dv">64</span>) <span class="co">#batch_size * hidden_state_size</span></a>
+<a class="sourceLine" id="cb4-16" data-line-number="16">init_s <span class="op">=</span>  tf.contrib.rnn.LSTMStateTuple(c<span class="op">=</span> tf.convert_to_tensor(init_state), h<span class="op">=</span> tf.convert_to_tensor(init_state))</a>
+<a class="sourceLine" id="cb4-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb4-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb4-19" data-line-number="19">outputs, states  <span class="op">=</span> tf.nn.dynamic_rnn(cell<span class="op">=</span>cell,</a>
+<a class="sourceLine" id="cb4-20" data-line-number="20">dtype<span class="op">=</span>tf.float64,</a>
+<a class="sourceLine" id="cb4-21" data-line-number="21">initial_state <span class="op">=</span> init_s,</a>
+<a class="sourceLine" id="cb4-22" data-line-number="22">sequence_length<span class="op">=</span>X_lengths,</a>
+<a class="sourceLine" id="cb4-23" data-line-number="23">inputs<span class="op">=</span>X)</a>
+<a class="sourceLine" id="cb4-24" data-line-number="24"></a>
+<a class="sourceLine" id="cb4-25" data-line-number="25"></a>
+<a class="sourceLine" id="cb4-26" data-line-number="26"><span class="cf">with</span> tf.Session() <span class="im">as</span> sess:</a>
+<a class="sourceLine" id="cb4-27" data-line-number="27">sess.run(tf.global_variables_initializer())</a>
+<a class="sourceLine" id="cb4-28" data-line-number="28">output_val, state_val <span class="op">=</span> sess.run([outputs, states])</a>
+<a class="sourceLine" id="cb4-29" data-line-number="29"><span class="bu">print</span>(output_val.shape)</a>
+<a class="sourceLine" id="cb4-30" data-line-number="30"><span class="bu">print</span>(state_val.c.shape)</a>
+<a class="sourceLine" id="cb4-31" data-line-number="31"></a>
+<a class="sourceLine" id="cb4-32" data-line-number="32"></a>
+<a class="sourceLine" id="cb4-33" data-line-number="33"></a>
+<a class="sourceLine" id="cb4-34" data-line-number="34"></a>
+<a class="sourceLine" id="cb4-35" data-line-number="35"><span class="cf">assert</span> outputs.shape <span class="op">==</span> (<span class="dv">2</span>, <span class="dv">10</span>, <span class="dv">64</span>)</a>
+<a class="sourceLine" id="cb4-36" data-line-number="36"><span class="co"># the final outputs state and states returned must be equal for each      </span></a>
+<a class="sourceLine" id="cb4-37" data-line-number="37"><span class="co"># sequence</span></a>
+<a class="sourceLine" id="cb4-38" data-line-number="38"><span class="bu">print</span>(outputs)  <span class="co">#all ten outputs of two samples</span></a>
+<a class="sourceLine" id="cb4-39" data-line-number="39"><span class="bu">print</span>(states)   <span class="co">#cell states and hidden units: all two sequence state output of two trajectory</span></a></code></pre></div>
+<p>(2, 10, 64) (2, 64) Tensor(&quot;rnn/transpose_1:0&quot;, shape=(2, 10, 64), dtype=float64) LSTMStateTuple(c=&lt;tf.Tensor 'rnn/while/Exit_3:0' shape=(2, 64) dtype=float64&gt;, h=&lt;tf.Tensor 'rnn/while/Exit_4:0' shape=(2, 64) dtype=float64&gt;)</p>
+<h2 id="multicell-case">Multicell case</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb5-1" data-line-number="1">tf.reset_default_graph()</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"><span class="co">#cell = tf.nn.rnn_cell.LSTMCell(num_units=64, state_is_tuple=True)</span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">multi_cell <span class="op">=</span> tf.nn.rnn_cell.MultiRNNCell([tf.nn.rnn_cell.LSTMCell(num_units<span class="op">=</span><span class="dv">64</span>, state_is_tuple<span class="op">=</span><span class="va">True</span>), tf.nn.rnn_cell.LSTMCell(num_units<span class="op">=</span><span class="dv">64</span>, state_is_tuple<span class="op">=</span><span class="va">True</span>)])</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">init_state <span class="op">=</span> np.random.randn(<span class="dv">2</span>, <span class="dv">64</span>)</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">init_s <span class="op">=</span>  tf.contrib.rnn.LSTMStateTuple(c<span class="op">=</span> tf.convert_to_tensor(init_state), h<span class="op">=</span> tf.convert_to_tensor(init_state))</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb5-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">outputs, states  <span class="op">=</span> tf.nn.dynamic_rnn(cell<span class="op">=</span>multi_cell,</a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">dtype<span class="op">=</span>tf.float64,</a>
+<a class="sourceLine" id="cb5-12" data-line-number="12">initial_state <span class="op">=</span> (init_s, init_s),</a>
+<a class="sourceLine" id="cb5-13" data-line-number="13">sequence_length<span class="op">=</span>X_lengths,</a>
+<a class="sourceLine" id="cb5-14" data-line-number="14">inputs<span class="op">=</span>X)</a>
+<a class="sourceLine" id="cb5-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb5-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb5-17" data-line-number="17"><span class="cf">with</span> tf.Session() <span class="im">as</span> sess:</a>
+<a class="sourceLine" id="cb5-18" data-line-number="18">sess.run(tf.global_variables_initializer())</a>
+<a class="sourceLine" id="cb5-19" data-line-number="19">a<span class="op">=</span> sess.run(tf.sigmoid(X))</a>
+<a class="sourceLine" id="cb5-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb5-21" data-line-number="21">output_val, state_val <span class="op">=</span> sess.run([outputs, states])</a>
+<a class="sourceLine" id="cb5-22" data-line-number="22"><span class="bu">print</span>(<span class="bu">type</span>(output_val))</a>
+<a class="sourceLine" id="cb5-23" data-line-number="23"><span class="bu">print</span>(output_val[:,<span class="dv">1</span>:,:].shape)</a>
+<a class="sourceLine" id="cb5-24" data-line-number="24"><span class="bu">print</span>(<span class="st">&#39;Something related to StateTuple&#39;</span>)</a></code></pre></div>
+<p>&lt;class 'numpy.ndarray'&gt; (2, 9, 64) Something related to StateTuple</p>
+<h1 id="fast-predict">fast predict</h1>
+<h2 id="tensorflow-fast-predict">tensorflow fast predict</h2>
+<p>use generator to keep .predict open</p>
 <p>Why you need this? Detailed explanation <a href="https://stackoverflow.com/questions/51403540/tensorflow-estimator-predict-without-loading-from-checkpoint-everytime" target="_blank" rel="noopener">here</a></p>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf
-
-<span class="token keyword">class</span> <span class="token class-name">FastPredict</span><span class="token punctuation">:</span>
-
-<span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> estimator<span class="token punctuation">,</span> input_fn<span class="token punctuation">)</span><span class="token punctuation">:</span>
-self<span class="token punctuation">.</span>estimator <span class="token operator">=</span> estimator
-self<span class="token punctuation">.</span>first_run <span class="token operator">=</span> <span class="token boolean">True</span>
-self<span class="token punctuation">.</span>closed <span class="token operator">=</span> <span class="token boolean">False</span>
-self<span class="token punctuation">.</span>input_fn <span class="token operator">=</span> input_fn
-
-<span class="token keyword">def</span> <span class="token function">_create_generator</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
-<span class="token keyword">while</span> <span class="token operator">not</span> self<span class="token punctuation">.</span>closed<span class="token punctuation">:</span>
-<span class="token keyword">yield</span> self<span class="token punctuation">.</span>next_features
-
-<span class="token keyword">def</span> <span class="token function">predict</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> feature_batch<span class="token punctuation">)</span><span class="token punctuation">:</span>
-<span class="token triple-quoted-string string">""" Runs a prediction on a set of features. Calling multiple times
-does *not* regenerate the graph which makes predict much faster.
-feature_batch a list of list of features. IMPORTANT: If you're only classifying 1 thing,
-you still need to make it a batch of 1 by wrapping it in a list (i.e. predict([my_feature]), not predict(my_feature) 
-"""</span>
-self<span class="token punctuation">.</span>next_features <span class="token operator">=</span> feature_batch
-<span class="token keyword">if</span> self<span class="token punctuation">.</span>first_run<span class="token punctuation">:</span>
-self<span class="token punctuation">.</span>batch_size <span class="token operator">=</span> len<span class="token punctuation">(</span>feature_batch<span class="token punctuation">)</span>
-self<span class="token punctuation">.</span>predictions <span class="token operator">=</span> self<span class="token punctuation">.</span>estimator<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>
-input_fn<span class="token operator">=</span>self<span class="token punctuation">.</span>input_fn<span class="token punctuation">(</span>self<span class="token punctuation">.</span>_create_generator<span class="token punctuation">)</span><span class="token punctuation">)</span>
-self<span class="token punctuation">.</span>first_run <span class="token operator">=</span> <span class="token boolean">False</span>
-<span class="token keyword">elif</span> self<span class="token punctuation">.</span>batch_size <span class="token operator">!=</span> len<span class="token punctuation">(</span>feature_batch<span class="token punctuation">)</span><span class="token punctuation">:</span>
-<span class="token keyword">raise</span> ValueError<span class="token punctuation">(</span><span class="token string">"All batches must be of the same size. First-batch:"</span> <span class="token operator">+</span> str<span class="token punctuation">(</span>self<span class="token punctuation">.</span>batch_size<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">" This-batch:"</span> <span class="token operator">+</span> str<span class="token punctuation">(</span>len<span class="token punctuation">(</span>feature_batch<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-results <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
-<span class="token keyword">for</span> _ <span class="token keyword">in</span> range<span class="token punctuation">(</span>self<span class="token punctuation">.</span>batch_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
-results<span class="token punctuation">.</span>append<span class="token punctuation">(</span>next<span class="token punctuation">(</span>self<span class="token punctuation">.</span>predictions<span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">return</span> results
-
-<span class="token keyword">def</span> <span class="token function">close</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
-self<span class="token punctuation">.</span>closed <span class="token operator">=</span> <span class="token boolean">True</span>
-<span class="token keyword">try</span><span class="token punctuation">:</span>
-next<span class="token punctuation">(</span>self<span class="token punctuation">.</span>predictions<span class="token punctuation">)</span>
-<span class="token keyword">except</span><span class="token punctuation">:</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Exception in fast_predict. This is probably OK"</span><span class="token punctuation">)</span>
-
-
-<span class="token keyword">def</span> <span class="token function">example_input_fn</span><span class="token punctuation">(</span>generator<span class="token punctuation">)</span><span class="token punctuation">:</span>
-<span class="token triple-quoted-string string">""" An example input function to pass to predict. It must take a generator as input """</span>
-
-<span class="token keyword">def</span> <span class="token function">_inner_input_fn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-dataset <span class="token operator">=</span> tf<span class="token punctuation">.</span>data<span class="token punctuation">.</span>Dataset<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>from_generator<span class="token punctuation">(</span>generator<span class="token punctuation">,</span> output_types<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'a'</span><span class="token punctuation">:</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">,</span><span class="token string">'b'</span><span class="token punctuation">:</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>batch<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
-iterator <span class="token operator">=</span> dataset<span class="token punctuation">.</span>make_one_shot_iterator<span class="token punctuation">(</span><span class="token punctuation">)</span>
-features <span class="token operator">=</span> iterator<span class="token punctuation">.</span>get_next<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token keyword">return</span> features
-
-<span class="token keyword">return</span> _inner_input_fn
-</code></pre>
-<h2 id="tf-data-Dataset-from-generator"><a href="#tf-data-Dataset-from-generator" class="headerlink" title="tf.data.Dataset().from_generator"></a>tf.data.Dataset().from_generator</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
-<span class="token keyword">def</span> <span class="token function">_create_generator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-a <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span>
-b <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
-result <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
-result<span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">]</span> <span class="token operator">=</span>  a
-result<span class="token punctuation">[</span><span class="token string">'b'</span><span class="token punctuation">]</span> <span class="token operator">=</span> b
-<span class="token keyword">yield</span> result
-
-
-gen <span class="token operator">=</span> _create_generator<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-dataset <span class="token operator">=</span> tf<span class="token punctuation">.</span>data<span class="token punctuation">.</span>Dataset<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>from_generator<span class="token punctuation">(</span>_create_generator<span class="token punctuation">,</span>
-output_shapes<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'a'</span><span class="token punctuation">:</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span><span class="token string">'b'</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
-output_types <span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'a'</span><span class="token punctuation">:</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">,</span> <span class="token string">'b'</span><span class="token punctuation">:</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>batch<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
-iterator <span class="token operator">=</span> dataset<span class="token punctuation">.</span>make_one_shot_iterator<span class="token punctuation">(</span><span class="token punctuation">)</span>
-features <span class="token operator">=</span> iterator<span class="token punctuation">.</span>get_next<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-
-init <span class="token operator">=</span> tf<span class="token punctuation">.</span>initialize_all_variables<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>init<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>features<span class="token punctuation">)</span><span class="token punctuation">)</span>
-</code></pre>
-<p>WARNING:tensorflow:From /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/tensorflow/python/util/tf_should_use.py:118: initialize_all_variables (from tensorflow.python.ops.variables) is deprecated and will be removed after 2017-03-02.<br>Instructions for updating:<br>Use <code>tf.global_variables_initializer</code> instead.<br>{‘a’: array([[[ 0.6078665 ,  0.7673362 ],<br>[-1.095272  , -0.44154257],<br>[ 0.24826635,  1.8101764 ]]], dtype=float32), ‘b’: array([[-1.3138337 ,  0.05587422]], dtype=float32)}</p>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
-<span class="token keyword">def</span> <span class="token function">_create_generator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-a <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span>
-b <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
-result <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
-result<span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">]</span> <span class="token operator">=</span> tf<span class="token punctuation">.</span>contrib<span class="token punctuation">.</span>rnn<span class="token punctuation">.</span>LSTMStateTuple<span class="token punctuation">(</span>c<span class="token operator">=</span>a<span class="token punctuation">,</span> h<span class="token operator">=</span>b<span class="token punctuation">)</span>
-<span class="token keyword">yield</span> result
-
-
-gen <span class="token operator">=</span> _create_generator<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-dataset <span class="token operator">=</span> tf<span class="token punctuation">.</span>data<span class="token punctuation">.</span>Dataset<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>from_generator<span class="token punctuation">(</span>_create_generator<span class="token punctuation">,</span>
-output_types <span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">'a'</span><span class="token punctuation">:</span>tf<span class="token punctuation">.</span>contrib<span class="token punctuation">.</span>rnn<span class="token punctuation">.</span>LSTMStateTuple<span class="token punctuation">(</span>c<span class="token operator">=</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">,</span> h<span class="token operator">=</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>batch<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
-
-iterator <span class="token operator">=</span> dataset<span class="token punctuation">.</span>make_one_shot_iterator<span class="token punctuation">(</span><span class="token punctuation">)</span>
-features <span class="token operator">=</span> iterator<span class="token punctuation">.</span>get_next<span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-
-init <span class="token operator">=</span> tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>init<span class="token punctuation">)</span>
-g <span class="token operator">=</span> sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>features<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>g<span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-</code></pre>
-<p>LSTMStateTuple(c=array([[[ 0.15593866, -1.1535455 ],<br>[ 0.8337963 ,  0.3000586 ],<br>[ 1.3395942 , -0.65611506]]], dtype=float32), h=array([[ 0.5950521 , -0.82992613]], dtype=float32))</p>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> os
-<span class="token keyword">print</span><span class="token punctuation">(</span>os<span class="token punctuation">.</span>environ<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'CONFIG'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="im">import</span> tensorflow <span class="im">as</span> tf</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="kw">class</span> FastPredict:</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5"><span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, estimator, input_fn):</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6"><span class="va">self</span>.estimator <span class="op">=</span> estimator</a>
+<a class="sourceLine" id="cb6-7" data-line-number="7"><span class="va">self</span>.first_run <span class="op">=</span> <span class="va">True</span></a>
+<a class="sourceLine" id="cb6-8" data-line-number="8"><span class="va">self</span>.closed <span class="op">=</span> <span class="va">False</span></a>
+<a class="sourceLine" id="cb6-9" data-line-number="9"><span class="va">self</span>.input_fn <span class="op">=</span> input_fn</a>
+<a class="sourceLine" id="cb6-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb6-11" data-line-number="11"><span class="kw">def</span> _create_generator(<span class="va">self</span>):</a>
+<a class="sourceLine" id="cb6-12" data-line-number="12"><span class="cf">while</span> <span class="kw">not</span> <span class="va">self</span>.closed:</a>
+<a class="sourceLine" id="cb6-13" data-line-number="13"><span class="cf">yield</span> <span class="va">self</span>.next_features</a>
+<a class="sourceLine" id="cb6-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb6-15" data-line-number="15"><span class="kw">def</span> predict(<span class="va">self</span>, feature_batch):</a>
+<a class="sourceLine" id="cb6-16" data-line-number="16"><span class="co">&quot;&quot;&quot; Runs a prediction on a set of features. Calling multiple times</span></a>
+<a class="sourceLine" id="cb6-17" data-line-number="17"><span class="co">does *not* regenerate the graph which makes predict much faster.</span></a>
+<a class="sourceLine" id="cb6-18" data-line-number="18"><span class="co">feature_batch a list of list of features. IMPORTANT: If you&#39;re only classifying 1 thing,</span></a>
+<a class="sourceLine" id="cb6-19" data-line-number="19"><span class="co">you still need to make it a batch of 1 by wrapping it in a list (i.e. predict([my_feature]), not predict(my_feature) </span></a>
+<a class="sourceLine" id="cb6-20" data-line-number="20"><span class="co">&quot;&quot;&quot;</span></a>
+<a class="sourceLine" id="cb6-21" data-line-number="21"><span class="va">self</span>.next_features <span class="op">=</span> feature_batch</a>
+<a class="sourceLine" id="cb6-22" data-line-number="22"><span class="cf">if</span> <span class="va">self</span>.first_run:</a>
+<a class="sourceLine" id="cb6-23" data-line-number="23"><span class="va">self</span>.batch_size <span class="op">=</span> <span class="bu">len</span>(feature_batch)</a>
+<a class="sourceLine" id="cb6-24" data-line-number="24"><span class="va">self</span>.predictions <span class="op">=</span> <span class="va">self</span>.estimator.predict(</a>
+<a class="sourceLine" id="cb6-25" data-line-number="25">input_fn<span class="op">=</span><span class="va">self</span>.input_fn(<span class="va">self</span>._create_generator))</a>
+<a class="sourceLine" id="cb6-26" data-line-number="26"><span class="va">self</span>.first_run <span class="op">=</span> <span class="va">False</span></a>
+<a class="sourceLine" id="cb6-27" data-line-number="27"><span class="cf">elif</span> <span class="va">self</span>.batch_size <span class="op">!=</span> <span class="bu">len</span>(feature_batch):</a>
+<a class="sourceLine" id="cb6-28" data-line-number="28"><span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">&quot;All batches must be of the same size. First-batch:&quot;</span> <span class="op">+</span> <span class="bu">str</span>(<span class="va">self</span>.batch_size) <span class="op">+</span> <span class="st">&quot; This-batch:&quot;</span> <span class="op">+</span> <span class="bu">str</span>(<span class="bu">len</span>(feature_batch)))</a>
+<a class="sourceLine" id="cb6-29" data-line-number="29"></a>
+<a class="sourceLine" id="cb6-30" data-line-number="30">results <span class="op">=</span> []</a>
+<a class="sourceLine" id="cb6-31" data-line-number="31"><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="va">self</span>.batch_size):</a>
+<a class="sourceLine" id="cb6-32" data-line-number="32">results.append(<span class="bu">next</span>(<span class="va">self</span>.predictions))</a>
+<a class="sourceLine" id="cb6-33" data-line-number="33"><span class="cf">return</span> results</a>
+<a class="sourceLine" id="cb6-34" data-line-number="34"></a>
+<a class="sourceLine" id="cb6-35" data-line-number="35"><span class="kw">def</span> close(<span class="va">self</span>):</a>
+<a class="sourceLine" id="cb6-36" data-line-number="36"><span class="va">self</span>.closed <span class="op">=</span> <span class="va">True</span></a>
+<a class="sourceLine" id="cb6-37" data-line-number="37"><span class="cf">try</span>:</a>
+<a class="sourceLine" id="cb6-38" data-line-number="38"><span class="bu">next</span>(<span class="va">self</span>.predictions)</a>
+<a class="sourceLine" id="cb6-39" data-line-number="39"><span class="cf">except</span>:</a>
+<a class="sourceLine" id="cb6-40" data-line-number="40"><span class="bu">print</span>(<span class="st">&quot;Exception in fast_predict. This is probably OK&quot;</span>)</a>
+<a class="sourceLine" id="cb6-41" data-line-number="41"></a>
+<a class="sourceLine" id="cb6-42" data-line-number="42"></a>
+<a class="sourceLine" id="cb6-43" data-line-number="43"><span class="kw">def</span> example_input_fn(generator):</a>
+<a class="sourceLine" id="cb6-44" data-line-number="44"><span class="co">&quot;&quot;&quot; An example input function to pass to predict. It must take a generator as input &quot;&quot;&quot;</span></a>
+<a class="sourceLine" id="cb6-45" data-line-number="45"></a>
+<a class="sourceLine" id="cb6-46" data-line-number="46"><span class="kw">def</span> _inner_input_fn():</a>
+<a class="sourceLine" id="cb6-47" data-line-number="47">dataset <span class="op">=</span> tf.data.Dataset().from_generator(generator, output_types<span class="op">=</span>{<span class="st">&#39;a&#39;</span>:(<span class="dv">10</span>,),<span class="st">&#39;b&#39;</span>:(<span class="dv">2</span>,)}).batch(<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb6-48" data-line-number="48">iterator <span class="op">=</span> dataset.make_one_shot_iterator()</a>
+<a class="sourceLine" id="cb6-49" data-line-number="49">features <span class="op">=</span> iterator.get_next()</a>
+<a class="sourceLine" id="cb6-50" data-line-number="50"><span class="cf">return</span> features</a>
+<a class="sourceLine" id="cb6-51" data-line-number="51"></a>
+<a class="sourceLine" id="cb6-52" data-line-number="52"><span class="cf">return</span> _inner_input_fn</a></code></pre></div>
+<h2 id="tf.data.dataset.from_generator">tf.data.Dataset().from_generator</h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="im">import</span> numpy <span class="im">as</span> np</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="kw">def</span> _create_generator():</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">a <span class="op">=</span> np.random.randn(<span class="dv">3</span>,<span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">b <span class="op">=</span> np.random.randn(<span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">result <span class="op">=</span> {}</a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">result[<span class="st">&#39;a&#39;</span>] <span class="op">=</span>  a</a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">result[<span class="st">&#39;b&#39;</span>] <span class="op">=</span> b</a>
+<a class="sourceLine" id="cb7-9" data-line-number="9"><span class="cf">yield</span> result</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb7-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb7-12" data-line-number="12">gen <span class="op">=</span> _create_generator()</a>
+<a class="sourceLine" id="cb7-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb7-14" data-line-number="14">dataset <span class="op">=</span> tf.data.Dataset().from_generator(_create_generator,</a>
+<a class="sourceLine" id="cb7-15" data-line-number="15">output_shapes<span class="op">=</span>{<span class="st">&#39;a&#39;</span>:(<span class="dv">3</span>,<span class="dv">2</span>),<span class="st">&#39;b&#39;</span>:<span class="dv">2</span>},</a>
+<a class="sourceLine" id="cb7-16" data-line-number="16">output_types <span class="op">=</span>{<span class="st">&#39;a&#39;</span>:tf.float32, <span class="st">&#39;b&#39;</span>:tf.float32}).batch(<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb7-17" data-line-number="17">iterator <span class="op">=</span> dataset.make_one_shot_iterator()</a>
+<a class="sourceLine" id="cb7-18" data-line-number="18">features <span class="op">=</span> iterator.get_next()</a>
+<a class="sourceLine" id="cb7-19" data-line-number="19"></a>
+<a class="sourceLine" id="cb7-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb7-21" data-line-number="21">init <span class="op">=</span> tf.initialize_all_variables()</a>
+<a class="sourceLine" id="cb7-22" data-line-number="22"><span class="cf">with</span> tf.Session() <span class="im">as</span> sess:</a>
+<a class="sourceLine" id="cb7-23" data-line-number="23">sess.run(init)</a>
+<a class="sourceLine" id="cb7-24" data-line-number="24"><span class="bu">print</span>(sess.run(features))</a></code></pre></div>
+<p>WARNING:tensorflow:From /Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/tensorflow/python/util/tf_should_use.py:118: initialize_all_variables (from tensorflow.python.ops.variables) is deprecated and will be removed after 2017-03-02. Instructions for updating: Use <code>tf.global_variables_initializer</code> instead. {'a': array([[[ 0.6078665 , 0.7673362 ], [-1.095272 , -0.44154257], [ 0.24826635, 1.8101764 ]]], dtype=float32), 'b': array([[-1.3138337 , 0.05587422]], dtype=float32)}</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="im">import</span> numpy <span class="im">as</span> np</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2"><span class="kw">def</span> _create_generator():</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3"><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">a <span class="op">=</span> np.random.randn(<span class="dv">3</span>,<span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">b <span class="op">=</span> np.random.randn(<span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">result <span class="op">=</span> {}</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">result[<span class="st">&#39;a&#39;</span>] <span class="op">=</span> tf.contrib.rnn.LSTMStateTuple(c<span class="op">=</span>a, h<span class="op">=</span>b)</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8"><span class="cf">yield</span> result</a>
+<a class="sourceLine" id="cb8-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb8-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb8-11" data-line-number="11">gen <span class="op">=</span> _create_generator()</a>
+<a class="sourceLine" id="cb8-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb8-13" data-line-number="13">dataset <span class="op">=</span> tf.data.Dataset().from_generator(_create_generator,</a>
+<a class="sourceLine" id="cb8-14" data-line-number="14">output_types <span class="op">=</span>{<span class="st">&#39;a&#39;</span>:tf.contrib.rnn.LSTMStateTuple(c<span class="op">=</span>tf.float32, h<span class="op">=</span>tf.float32)}).batch(<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb8-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb8-16" data-line-number="16">iterator <span class="op">=</span> dataset.make_one_shot_iterator()</a>
+<a class="sourceLine" id="cb8-17" data-line-number="17">features <span class="op">=</span> iterator.get_next()</a>
+<a class="sourceLine" id="cb8-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb8-19" data-line-number="19"></a>
+<a class="sourceLine" id="cb8-20" data-line-number="20">init <span class="op">=</span> tf.global_variables_initializer()</a>
+<a class="sourceLine" id="cb8-21" data-line-number="21"><span class="cf">with</span> tf.Session() <span class="im">as</span> sess:</a>
+<a class="sourceLine" id="cb8-22" data-line-number="22">sess.run(init)</a>
+<a class="sourceLine" id="cb8-23" data-line-number="23">g <span class="op">=</span> sess.run(features)</a>
+<a class="sourceLine" id="cb8-24" data-line-number="24"><span class="bu">print</span>(g[<span class="st">&#39;a&#39;</span>])</a></code></pre></div>
+<p>LSTMStateTuple(c=array([[[ 0.15593866, -1.1535455 ], [ 0.8337963 , 0.3000586 ], [ 1.3395942 , -0.65611506]]], dtype=float32), h=array([[ 0.5950521 , -0.82992613]], dtype=float32))</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="im">import</span> os</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="bu">print</span>(os.environ.get(<span class="st">&#39;CONFIG&#39;</span>))</a></code></pre></div>
 <p>None</p>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf
-hparams <span class="token operator">=</span> tf<span class="token punctuation">.</span>contrib<span class="token punctuation">.</span>training<span class="token punctuation">.</span>HParams<span class="token punctuation">(</span>
-learning_rate<span class="token operator">=</span><span class="token number">0.1</span><span class="token punctuation">,</span> num_hidden_units<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> activation<span class="token operator">=</span><span class="token string">'relu'</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>hparams<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'learning_rate2'</span><span class="token punctuation">,</span> None<span class="token punctuation">)</span><span class="token punctuation">)</span>
-hparams<span class="token punctuation">.</span>add_hparam<span class="token punctuation">(</span><span class="token string">'test2'</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
-<span class="token comment" spellcheck="true">#None > 2   # can't compare None with 2</span>
-</code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="im">import</span> tensorflow <span class="im">as</span> tf</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">hparams <span class="op">=</span> tf.contrib.training.HParams(</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">learning_rate<span class="op">=</span><span class="fl">0.1</span>, num_hidden_units<span class="op">=</span><span class="dv">100</span>, activation<span class="op">=</span><span class="st">&#39;relu&#39;</span>)</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4"><span class="bu">print</span>(hparams.get(<span class="st">&#39;learning_rate2&#39;</span>, <span class="va">None</span>))</a>
+<a class="sourceLine" id="cb10-5" data-line-number="5">hparams.add_hparam(<span class="st">&#39;test2&#39;</span>, <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb10-6" data-line-number="6"><span class="co">#None &gt; 2   # can&#39;t compare None with 2</span></a></code></pre></div>
 <p>None</p>
-<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> configparser <span class="token keyword">as</span> cp
-target <span class="token operator">=</span> cp<span class="token punctuation">.</span>ConfigParser<span class="token punctuation">(</span><span class="token punctuation">)</span>
-config <span class="token operator">=</span> target<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token string">'single.ini'</span><span class="token punctuation">)</span>
-
-<span class="token comment" spellcheck="true">#use config to get variours params</span>
-</code></pre>
-<h1 id="test-shared-embedding"><a href="#test-shared-embedding" class="headerlink" title="test shared embedding"></a>test shared embedding</h1><h3 id="1-How-to-use-embedding"><a href="#1-How-to-use-embedding" class="headerlink" title="1. How to use embedding"></a>1. How to use embedding</h3><p>tf.feature_column.input_layer(.., ..)</p>
-<h3 id="2-How-tf-Varlen-react-when-read-in-batch"><a href="#2-How-tf-Varlen-react-when-read-in-batch" class="headerlink" title="2. How tf.Varlen react when read in batch"></a>2. How tf.Varlen react when read in batch</h3><p>data is in format tf.SparseTensor</p>
-<h3 id="embedding-make-parse-example-spec"><a href="#embedding-make-parse-example-spec" class="headerlink" title="embedding:  make_parse_example_spec"></a>embedding:  make_parse_example_spec</h3><p>it is <code>tf.Varlen</code> because embedding can be multiple dimension, and then you can <code>combine</code> them by sum, mean, etc.</p>
-<pre class=" language-python"><code class="language-python">fc <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_hash_bucket<span class="token punctuation">(</span><span class="token string">'my_fc'</span><span class="token punctuation">,</span>
-<span class="token number">10</span><span class="token punctuation">)</span>
-
-shared_columns <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>shared_embedding_columns<span class="token punctuation">(</span><span class="token punctuation">[</span>fc<span class="token punctuation">]</span><span class="token punctuation">,</span>
-<span class="token number">32</span><span class="token punctuation">,</span> combiner<span class="token operator">=</span><span class="token string">'sum'</span><span class="token punctuation">,</span>
-shared_embedding_collection_name<span class="token operator">=</span><span class="token string">'my_em_fc'</span><span class="token punctuation">)</span>
-tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span>shared_columns<span class="token punctuation">)</span>
-</code></pre>
-<p>{‘my_fc’: VarLenFeature(dtype=tf.string)}</p>
-<pre class=" language-python"><code class="language-python">fc <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_vocabulary_file<span class="token punctuation">(</span><span class="token string">'my_fc'</span><span class="token punctuation">,</span>vocabulary_file<span class="token operator">=</span><span class="token string">'abc'</span><span class="token punctuation">,</span>vocabulary_size<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> 
-num_oov_buckets<span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">)</span>
-
-shared_columns <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>shared_embedding_columns<span class="token punctuation">(</span><span class="token punctuation">[</span>fc<span class="token punctuation">]</span><span class="token punctuation">,</span>
-<span class="token number">32</span><span class="token punctuation">,</span> combiner<span class="token operator">=</span><span class="token string">'sum'</span><span class="token punctuation">,</span>
-shared_embedding_collection_name<span class="token operator">=</span><span class="token string">'my_em_fc'</span><span class="token punctuation">)</span>
-tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span>shared_columns<span class="token punctuation">)</span>
-</code></pre>
-<p>{‘my_fc’: VarLenFeature(dtype=tf.string)}</p>
-<h2 id="check-tf-varlen"><a href="#check-tf-varlen" class="headerlink" title="check tf.varlen"></a>check tf.varlen</h2><pre class=" language-python"><code class="language-python">fc <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_vocabulary_file<span class="token punctuation">(</span><span class="token string">'my_fc'</span><span class="token punctuation">,</span>vocabulary_file<span class="token operator">=</span><span class="token string">'abc'</span><span class="token punctuation">,</span>vocabulary_size<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> 
-num_oov_buckets<span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">)</span>
-
-shared_columns <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>shared_embedding_columns<span class="token punctuation">(</span><span class="token punctuation">[</span>fc<span class="token punctuation">]</span><span class="token punctuation">,</span>
-<span class="token number">32</span><span class="token punctuation">,</span> combiner<span class="token operator">=</span><span class="token string">'sum'</span><span class="token punctuation">,</span>
-shared_embedding_collection_name<span class="token operator">=</span><span class="token string">'my_em_fc'</span><span class="token punctuation">,</span> <span class="token punctuation">)</span>
-target <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span>shared_columns<span class="token punctuation">)</span>     
-<span class="token keyword">for</span> key<span class="token punctuation">,</span> item <span class="token keyword">in</span> target<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>item<span class="token punctuation">)</span> <span class="token operator">==</span> tf<span class="token punctuation">.</span>VarLenFeature<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'_SharedEmbeddingColumn'</span> <span class="token keyword">in</span>  str<span class="token punctuation">(</span>type<span class="token punctuation">(</span>shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-a<span class="token operator">=</span> shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>name<span class="token punctuation">)</span>
-</code></pre>
-<p>True<br>VarLenFeature(dtype=tf.string)<br>my_fc</p>
-<p><class 'tensorflow.python.feature_column.feature_column._sharedembeddingcolumn'><br>_SharedEmbeddingColumn(categorical_column=_VocabularyFileCategoricalColumn(key=’my_fc’, vocabulary_file=’abc’, vocabulary_size=100, num_oov_buckets=10, dtype=tf.string, default_value=-1), dimension=32, combiner=’sum’, initializer=<tensorflow.python.ops.init_ops.truncatednormal object at 0x11e6f6668>, shared_embedding_collection_name=’my_em_fc’, ckpt_to_load_from=None, tensor_name_in_ckpt=None, max_norm=None, trainable=True)<br>True<br>my_fc_shared_embedding</tensorflow.python.ops.init_ops.truncatednormal></class></p>
-<h2 id="check-naming-of-these-method"><a href="#check-naming-of-these-method" class="headerlink" title="check naming of these method"></a>check naming of these method</h2><pre class=" language-python"><code class="language-python">fc <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_vocabulary_list<span class="token punctuation">(</span><span class="token string">'my_fc'</span><span class="token punctuation">,</span>vocabulary_list<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">,</span><span class="token string">'b'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> 
-num_oov_buckets<span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">)</span>
-
-shared_columns <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>shared_embedding_columns<span class="token punctuation">(</span><span class="token punctuation">[</span>fc<span class="token punctuation">]</span><span class="token punctuation">,</span>
-<span class="token number">32</span><span class="token punctuation">,</span> combiner<span class="token operator">=</span><span class="token string">'mean'</span><span class="token punctuation">,</span>
-shared_embedding_collection_name<span class="token operator">=</span><span class="token string">'my_em_fc'</span><span class="token punctuation">)</span>
-
-indicated_columns <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>indicator_column<span class="token punctuation">(</span>fc<span class="token punctuation">)</span>
-
-
-
-boundaries<span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">1.0</span><span class="token punctuation">,</span><span class="token number">2.0</span><span class="token punctuation">]</span>
-source_column <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>numeric_column<span class="token punctuation">(</span><span class="token string">'day'</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
-bucketized_column <span class="token operator">=</span>  tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>bucketized_column<span class="token punctuation">(</span>source_column<span class="token punctuation">,</span>boundaries<span class="token operator">=</span>boundaries<span class="token punctuation">)</span>
-
-
-target <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span>shared_columns<span class="token punctuation">)</span>     
-<span class="token keyword">print</span><span class="token punctuation">(</span>indicated_columns<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
-a<span class="token operator">=</span> shared_columns<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>name<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">17</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span>
-a<span class="token punctuation">.</span>dimension
-a<span class="token punctuation">.</span>combiner <span class="token operator">==</span> <span class="token string">'mean'</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>target<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'target keys'</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>list<span class="token punctuation">(</span>target<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">#change datatype to list to support indexing</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>source_column<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>bucketized_column<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span>indicated_columns<span class="token punctuation">)</span><span class="token punctuation">)</span>     
-
-<span class="token keyword">print</span><span class="token punctuation">(</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span><span class="token punctuation">[</span>source_column<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>     
-<span class="token keyword">print</span><span class="token punctuation">(</span>tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>make_parse_example_spec<span class="token punctuation">(</span><span class="token punctuation">[</span>bucketized_column<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>     
-target<span class="token punctuation">[</span><span class="token string">'my_fc'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>dtype<span class="token operator">==</span>tf<span class="token punctuation">.</span>string
-</code></pre>
-<p>my_fc_indicator<br>my_fc<br>_SharedEmbeddingColumn(categorical_column=_VocabularyListCategoricalColumn(key=’my_fc’, vocabulary_list=(‘a’, ‘b’), dtype=tf.string, default_value=-1, num_oov_buckets=10), dimension=32, combiner=’mean’, initializer=<tensorflow.python.ops.init_ops.truncatednormal object at 0x11e6f3668>, shared_embedding_collection_name=’my_em_fc’, ckpt_to_load_from=None, tensor_name_in_ckpt=None, max_norm=None, trainable=True)<br>{‘my_fc’: VarLenFeature(dtype=tf.string)}<br>target keys<br>my_fc<br>day<br>day_bucketized<br>{‘my_fc’: VarLenFeature(dtype=tf.string)}<br>{‘day’: FixedLenFeature(shape=(2,), dtype=tf.float32, default_value=None)}<br>{‘day’: FixedLenFeature(shape=(2,), dtype=tf.float32, default_value=None)}<br>True</tensorflow.python.ops.init_ops.truncatednormal></p>
-<h2 id="embedding-input-layer"><a href="#embedding-input-layer" class="headerlink" title="embedding - input_layer"></a>embedding - input_layer</h2><p>embedding layer should be defined before you <code>tf.initialize</code>. Because in most cases is also a trainable layer.</p>
-<pre class=" language-python"><code class="language-python">target <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
-target<span class="token punctuation">[</span><span class="token string">'name_star'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">[</span>b<span class="token string">'a'</span><span class="token punctuation">,</span>b<span class="token string">'b'</span><span class="token punctuation">,</span>b<span class="token string">''</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span>b<span class="token string">'a'</span><span class="token punctuation">,</span>b<span class="token string">'c'</span><span class="token punctuation">,</span>b<span class="token string">'d'</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
-
-embed_info <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>categorical_column_with_vocabulary_list<span class="token punctuation">(</span>
-<span class="token string">'name_star'</span><span class="token punctuation">,</span>
-<span class="token punctuation">[</span><span class="token string">'a'</span><span class="token punctuation">,</span><span class="token string">'b'</span><span class="token punctuation">,</span><span class="token string">'c'</span><span class="token punctuation">,</span><span class="token string">'d'</span><span class="token punctuation">,</span><span class="token string">'e'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> default_value<span class="token operator">=</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span>
-dtype<span class="token operator">=</span>tf<span class="token punctuation">.</span>string<span class="token punctuation">,</span> num_oov_buckets<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span>
-
-name_tensor<span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>embedding_column<span class="token punctuation">(</span>embed_info<span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">)</span>
-
-op <span class="token operator">=</span> tf<span class="token punctuation">.</span>feature_column<span class="token punctuation">.</span>input_layer<span class="token punctuation">(</span>target<span class="token punctuation">,</span>feature_columns<span class="token operator">=</span>name_tensor<span class="token punctuation">)</span>
-
-
-<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>tables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span><span class="token punctuation">[</span>op<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-</code></pre>
-<h1 id="Miscellany"><a href="#Miscellany" class="headerlink" title="Miscellany"></a>Miscellany</h1><h2 id="tf-gather-nd"><a href="#tf-gather-nd" class="headerlink" title="tf.gather_nd"></a>tf.gather_nd</h2><pre class=" language-python"><code class="language-python">a<span class="token operator">=</span>  np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-b <span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
-
-index <span class="token operator">=</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span>b<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">]</span>
-
-
-init <span class="token operator">=</span> tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>init<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>gather_nd<span class="token punctuation">(</span>b<span class="token punctuation">,</span> index<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>b<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-</code></pre>
-<h2 id="tf-less-tf-where"><a href="#tf-less-tf-where" class="headerlink" title="tf.less + tf.where"></a>tf.less + tf.where</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf
-<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
-a<span class="token operator">=</span>  np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-b <span class="token operator">=</span> tf<span class="token punctuation">.</span>convert_to_tensor<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
-
-result <span class="token operator">=</span>tf<span class="token punctuation">.</span>where<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>less<span class="token punctuation">(</span>b<span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span>tf<span class="token punctuation">.</span>ones_like<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">,</span> tf<span class="token punctuation">.</span>zeros_like<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
-
-init <span class="token operator">=</span> tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span>
-<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
-sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>init<span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>type<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">)</span>
-</code></pre>
-<h2 id="Tensor-computation"><a href="#Tensor-computation" class="headerlink" title="Tensor computation"></a>Tensor computation</h2><pre class=" language-python"><code class="language-python">a <span class="token operator">=</span> tf<span class="token punctuation">.</span>constant<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">7</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-b <span class="token operator">=</span> tf<span class="token punctuation">.</span>constant<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>a<span class="token operator">/</span>tf<span class="token punctuation">.</span>expand_dims<span class="token punctuation">(</span>b<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-</code></pre>
-<h2 id="Tensor-reshape"><a href="#Tensor-reshape" class="headerlink" title="Tensor reshape"></a>Tensor reshape</h2><p>确认rehsape逻辑，[batch_size, max_len, feature_dim]</p>
-<pre class=" language-python"><code class="language-python">a <span class="token operator">=</span> tf<span class="token punctuation">.</span>constant<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">7</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-
-<span class="token keyword">with</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> sess<span class="token punctuation">:</span>
-<span class="token keyword">print</span><span class="token punctuation">(</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>a<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-</code></pre>
-<h2 id="import-py-from-parent-directory"><a href="#import-py-from-parent-directory" class="headerlink" title="import .py from parent directory"></a>import .py from parent directory</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> os<span class="token punctuation">,</span> sys
-
-sys<span class="token punctuation">.</span>path<span class="token punctuation">.</span>append<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>dirname<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>dirname<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>abspath<span class="token punctuation">(</span>__file__<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="im">import</span> configparser <span class="im">as</span> cp</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">target <span class="op">=</span> cp.ConfigParser()</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">config <span class="op">=</span> target.read(<span class="st">&#39;single.ini&#39;</span>)</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb11-5" data-line-number="5"><span class="co">#use config to get variours params</span></a></code></pre></div>
+<h1 id="test-shared-embedding">test shared embedding</h1>
+<h3 id="how-to-use-embedding">1. How to use embedding</h3>
+<p>tf.feature_column.input_layer(.., ..)</p>
+<h3 id="how-tf.varlen-react-when-read-in-batch">2. How tf.Varlen react when read in batch</h3>
+<p>data is in format tf.SparseTensor</p>
+<h3 id="embedding-make_parse_example_spec">embedding: make_parse_example_spec</h3>
+<p>it is <code>tf.Varlen</code> because embedding can be multiple dimension, and then you can <code>combine</code> them by sum, mean, etc.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb12-1" data-line-number="1">fc <span class="op">=</span> tf.feature_column.categorical_column_with_hash_bucket(<span class="st">&#39;my_fc&#39;</span>,</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2"><span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">shared_columns <span class="op">=</span> tf.feature_column.shared_embedding_columns([fc],</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5"><span class="dv">32</span>, combiner<span class="op">=</span><span class="st">&#39;sum&#39;</span>,</a>
+<a class="sourceLine" id="cb12-6" data-line-number="6">shared_embedding_collection_name<span class="op">=</span><span class="st">&#39;my_em_fc&#39;</span>)</a>
+<a class="sourceLine" id="cb12-7" data-line-number="7">tf.feature_column.make_parse_example_spec(shared_columns)     </a></code></pre></div>
+<p>{'my_fc': VarLenFeature(dtype=tf.string)}</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb13-1" data-line-number="1">fc <span class="op">=</span> tf.feature_column.categorical_column_with_vocabulary_file(<span class="st">&#39;my_fc&#39;</span>,vocabulary_file<span class="op">=</span><span class="st">&#39;abc&#39;</span>,vocabulary_size<span class="op">=</span><span class="dv">100</span>, </a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">num_oov_buckets<span class="op">=</span> <span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb13-4" data-line-number="4">shared_columns <span class="op">=</span> tf.feature_column.shared_embedding_columns([fc],</a>
+<a class="sourceLine" id="cb13-5" data-line-number="5"><span class="dv">32</span>, combiner<span class="op">=</span><span class="st">&#39;sum&#39;</span>,</a>
+<a class="sourceLine" id="cb13-6" data-line-number="6">shared_embedding_collection_name<span class="op">=</span><span class="st">&#39;my_em_fc&#39;</span>)</a>
+<a class="sourceLine" id="cb13-7" data-line-number="7">tf.feature_column.make_parse_example_spec(shared_columns)     </a></code></pre></div>
+<p>{'my_fc': VarLenFeature(dtype=tf.string)}</p>
+<h2 id="check-tf.varlen">check tf.varlen</h2>
+<div class="sourceCode" id="cb14"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb14-1" data-line-number="1">fc <span class="op">=</span> tf.feature_column.categorical_column_with_vocabulary_file(<span class="st">&#39;my_fc&#39;</span>,vocabulary_file<span class="op">=</span><span class="st">&#39;abc&#39;</span>,vocabulary_size<span class="op">=</span><span class="dv">100</span>, </a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">num_oov_buckets<span class="op">=</span> <span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">shared_columns <span class="op">=</span> tf.feature_column.shared_embedding_columns([fc],</a>
+<a class="sourceLine" id="cb14-5" data-line-number="5"><span class="dv">32</span>, combiner<span class="op">=</span><span class="st">&#39;sum&#39;</span>,</a>
+<a class="sourceLine" id="cb14-6" data-line-number="6">shared_embedding_collection_name<span class="op">=</span><span class="st">&#39;my_em_fc&#39;</span>, )</a>
+<a class="sourceLine" id="cb14-7" data-line-number="7">target <span class="op">=</span> tf.feature_column.make_parse_example_spec(shared_columns)     </a>
+<a class="sourceLine" id="cb14-8" data-line-number="8"><span class="cf">for</span> key, item <span class="kw">in</span> target.items():</a>
+<a class="sourceLine" id="cb14-9" data-line-number="9"><span class="bu">print</span>(<span class="bu">type</span>(item) <span class="op">==</span> tf.VarLenFeature)</a>
+<a class="sourceLine" id="cb14-10" data-line-number="10"><span class="bu">print</span>(item)</a>
+<a class="sourceLine" id="cb14-11" data-line-number="11"><span class="bu">print</span>(key)</a>
+<a class="sourceLine" id="cb14-12" data-line-number="12"><span class="bu">print</span>(<span class="bu">type</span>(shared_columns[<span class="dv">0</span>]))</a>
+<a class="sourceLine" id="cb14-13" data-line-number="13"><span class="bu">print</span>(shared_columns[<span class="dv">0</span>])</a>
+<a class="sourceLine" id="cb14-14" data-line-number="14"><span class="bu">print</span>(<span class="st">&#39;_SharedEmbeddingColumn&#39;</span> <span class="kw">in</span>  <span class="bu">str</span>(<span class="bu">type</span>(shared_columns[<span class="dv">0</span>])))</a>
+<a class="sourceLine" id="cb14-15" data-line-number="15">a<span class="op">=</span> shared_columns[<span class="dv">0</span>]</a>
+<a class="sourceLine" id="cb14-16" data-line-number="16"><span class="bu">print</span>(shared_columns[<span class="dv">0</span>].name)</a></code></pre></div>
+<p>True VarLenFeature(dtype=tf.string) my_fc &lt;class 'tensorflow.python.feature_column.feature_column._SharedEmbeddingColumn'&gt; _SharedEmbeddingColumn(categorical_column=_VocabularyFileCategoricalColumn(key='my_fc', vocabulary_file='abc', vocabulary_size=100, num_oov_buckets=10, dtype=tf.string, default_value=-1), dimension=32, combiner='sum', initializer=&lt;tensorflow.python.ops.init_ops.TruncatedNormal object at 0x11e6f6668&gt;, shared_embedding_collection_name='my_em_fc', ckpt_to_load_from=None, tensor_name_in_ckpt=None, max_norm=None, trainable=True) True my_fc_shared_embedding</p>
+<h2 id="check-naming-of-these-method">check naming of these method</h2>
+<div class="sourceCode" id="cb15"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb15-1" data-line-number="1">fc <span class="op">=</span> tf.feature_column.categorical_column_with_vocabulary_list(<span class="st">&#39;my_fc&#39;</span>,vocabulary_list<span class="op">=</span>[<span class="st">&#39;a&#39;</span>,<span class="st">&#39;b&#39;</span>], </a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">num_oov_buckets<span class="op">=</span> <span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb15-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">shared_columns <span class="op">=</span> tf.feature_column.shared_embedding_columns([fc],</a>
+<a class="sourceLine" id="cb15-5" data-line-number="5"><span class="dv">32</span>, combiner<span class="op">=</span><span class="st">&#39;mean&#39;</span>,</a>
+<a class="sourceLine" id="cb15-6" data-line-number="6">shared_embedding_collection_name<span class="op">=</span><span class="st">&#39;my_em_fc&#39;</span>)</a>
+<a class="sourceLine" id="cb15-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb15-8" data-line-number="8">indicated_columns <span class="op">=</span> tf.feature_column.indicator_column(fc)</a>
+<a class="sourceLine" id="cb15-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb15-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb15-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb15-12" data-line-number="12">boundaries<span class="op">=</span> [<span class="fl">1.0</span>,<span class="fl">2.0</span>]</a>
+<a class="sourceLine" id="cb15-13" data-line-number="13">source_column <span class="op">=</span> tf.feature_column.numeric_column(<span class="st">&#39;day&#39;</span>, <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb15-14" data-line-number="14">bucketized_column <span class="op">=</span>  tf.feature_column.bucketized_column(source_column,boundaries<span class="op">=</span>boundaries)</a>
+<a class="sourceLine" id="cb15-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb15-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb15-17" data-line-number="17">target <span class="op">=</span> tf.feature_column.make_parse_example_spec(shared_columns)     </a>
+<a class="sourceLine" id="cb15-18" data-line-number="18"><span class="bu">print</span>(indicated_columns.name)</a>
+<a class="sourceLine" id="cb15-19" data-line-number="19">a<span class="op">=</span> shared_columns[<span class="dv">0</span>]</a>
+<a class="sourceLine" id="cb15-20" data-line-number="20"><span class="bu">print</span>(a.name[:<span class="op">-</span><span class="dv">17</span>])</a>
+<a class="sourceLine" id="cb15-21" data-line-number="21"><span class="bu">print</span>(a)</a>
+<a class="sourceLine" id="cb15-22" data-line-number="22">a.dimension</a>
+<a class="sourceLine" id="cb15-23" data-line-number="23">a.combiner <span class="op">==</span> <span class="st">&#39;mean&#39;</span></a>
+<a class="sourceLine" id="cb15-24" data-line-number="24"><span class="bu">print</span>(target)</a>
+<a class="sourceLine" id="cb15-25" data-line-number="25"><span class="bu">print</span>(<span class="st">&#39;target keys&#39;</span>)</a>
+<a class="sourceLine" id="cb15-26" data-line-number="26"><span class="bu">print</span>(<span class="bu">list</span>(target.keys())[<span class="dv">0</span>]) <span class="co">#change datatype to list to support indexing</span></a>
+<a class="sourceLine" id="cb15-27" data-line-number="27"></a>
+<a class="sourceLine" id="cb15-28" data-line-number="28"><span class="bu">print</span>(source_column.name)</a>
+<a class="sourceLine" id="cb15-29" data-line-number="29"><span class="bu">print</span>(bucketized_column.name)</a>
+<a class="sourceLine" id="cb15-30" data-line-number="30"></a>
+<a class="sourceLine" id="cb15-31" data-line-number="31"><span class="bu">print</span>(tf.feature_column.make_parse_example_spec(indicated_columns))     </a>
+<a class="sourceLine" id="cb15-32" data-line-number="32"></a>
+<a class="sourceLine" id="cb15-33" data-line-number="33"><span class="bu">print</span>(tf.feature_column.make_parse_example_spec([source_column]))     </a>
+<a class="sourceLine" id="cb15-34" data-line-number="34"><span class="bu">print</span>(tf.feature_column.make_parse_example_spec([bucketized_column]))     </a>
+<a class="sourceLine" id="cb15-35" data-line-number="35">target[<span class="st">&#39;my_fc&#39;</span>].dtype<span class="op">==</span>tf.string</a></code></pre></div>
+<p>my_fc_indicator my_fc _SharedEmbeddingColumn(categorical_column=_VocabularyListCategoricalColumn(key='my_fc', vocabulary_list=('a', 'b'), dtype=tf.string, default_value=-1, num_oov_buckets=10), dimension=32, combiner='mean', initializer=&lt;tensorflow.python.ops.init_ops.TruncatedNormal object at 0x11e6f3668&gt;, shared_embedding_collection_name='my_em_fc', ckpt_to_load_from=None, tensor_name_in_ckpt=None, max_norm=None, trainable=True) {'my_fc': VarLenFeature(dtype=tf.string)} target keys my_fc day day_bucketized {'my_fc': VarLenFeature(dtype=tf.string)} {'day': FixedLenFeature(shape=(2,), dtype=tf.float32, default_value=None)} {'day': FixedLenFeature(shape=(2,), dtype=tf.float32, default_value=None)} True</p>
+<h2 id="embedding---input_layer">embedding - input_layer</h2>
+<p>embedding layer should be defined before you <code>tf.initialize</code>. Because in most cases is also a trainable layer.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb16-1" data-line-number="1">target <span class="op">=</span> {}</a>
+<a class="sourceLine" id="cb16-2" data-line-number="2">target[<span class="st">&#39;name_star&#39;</span>] <span class="op">=</span> [[b<span class="st">&#39;a&#39;</span>,b<span class="st">&#39;b&#39;</span>,b<span class="st">&#39;&#39;</span>],[b<span class="st">&#39;a&#39;</span>,b<span class="st">&#39;c&#39;</span>,b<span class="st">&#39;d&#39;</span>]]</a>
+<a class="sourceLine" id="cb16-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb16-4" data-line-number="4">embed_info <span class="op">=</span> tf.feature_column.categorical_column_with_vocabulary_list(</a>
+<a class="sourceLine" id="cb16-5" data-line-number="5"><span class="st">&#39;name_star&#39;</span>,</a>
+<a class="sourceLine" id="cb16-6" data-line-number="6">[<span class="st">&#39;a&#39;</span>,<span class="st">&#39;b&#39;</span>,<span class="st">&#39;c&#39;</span>,<span class="st">&#39;d&#39;</span>,<span class="st">&#39;e&#39;</span>], default_value<span class="op">=-</span><span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb16-7" data-line-number="7">dtype<span class="op">=</span>tf.string, num_oov_buckets<span class="op">=</span><span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb16-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb16-9" data-line-number="9">name_tensor<span class="op">=</span> tf.feature_column.embedding_column(embed_info, <span class="dv">5</span>)</a>
+<a class="sourceLine" id="cb16-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb16-11" data-line-number="11">op <span class="op">=</span> tf.feature_column.input_layer(target,feature_columns<span class="op">=</span>name_tensor)</a>
+<a class="sourceLine" id="cb16-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb16-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb16-14" data-line-number="14"><span class="cf">with</span> tf.Session() <span class="im">as</span> sess:</a>
+<a class="sourceLine" id="cb16-15" data-line-number="15">sess.run(tf.global_variables_initializer())</a>
+<a class="sourceLine" id="cb16-16" data-line-number="16">sess.run(tf.tables_initializer())</a>
+<a class="sourceLine" id="cb16-17" data-line-number="17"><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>):</a>
+<a class="sourceLine" id="cb16-18" data-line-number="18"><span class="bu">print</span>(sess.run([op]))</a></code></pre></div>
+<h1 id="miscellany">Miscellany</h1>
+<h2 id="tf.gather_nd">tf.gather_nd</h2>
+<div class="sourceCode" id="cb17"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb17-1" data-line-number="1">a<span class="op">=</span>  np.array([[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]])</a>
+<a class="sourceLine" id="cb17-2" data-line-number="2">b <span class="op">=</span> tf.convert_to_tensor(a)</a>
+<a class="sourceLine" id="cb17-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb17-4" data-line-number="4">index <span class="op">=</span>[[<span class="dv">0</span>,<span class="dv">0</span>],[<span class="dv">1</span>,b[<span class="dv">0</span>,<span class="dv">0</span>]]]</a>
+<a class="sourceLine" id="cb17-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb17-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb17-7" data-line-number="7">init <span class="op">=</span> tf.global_variables_initializer()</a>
+<a class="sourceLine" id="cb17-8" data-line-number="8"><span class="cf">with</span> tf.Session() <span class="im">as</span> sess:</a>
+<a class="sourceLine" id="cb17-9" data-line-number="9">sess.run(init)</a>
+<a class="sourceLine" id="cb17-10" data-line-number="10"><span class="bu">print</span>(sess.run(tf.gather_nd(b, index)))</a>
+<a class="sourceLine" id="cb17-11" data-line-number="11"><span class="bu">print</span>(<span class="bu">type</span>(b))</a>
+<a class="sourceLine" id="cb17-12" data-line-number="12"><span class="bu">print</span>(b[:,<span class="dv">1</span>])</a></code></pre></div>
+<h2 id="tf.less-tf.where">tf.less + tf.where</h2>
+<div class="sourceCode" id="cb18"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="im">import</span> tensorflow <span class="im">as</span> tf</a>
+<a class="sourceLine" id="cb18-2" data-line-number="2"><span class="im">import</span> numpy <span class="im">as</span> np</a>
+<a class="sourceLine" id="cb18-3" data-line-number="3">a<span class="op">=</span>  np.array([<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">2</span>])</a>
+<a class="sourceLine" id="cb18-4" data-line-number="4">b <span class="op">=</span> tf.convert_to_tensor(a)</a>
+<a class="sourceLine" id="cb18-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb18-6" data-line-number="6">result <span class="op">=</span>tf.where(tf.less(b, <span class="dv">3</span>),tf.ones_like(b), tf.zeros_like(b))</a>
+<a class="sourceLine" id="cb18-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb18-8" data-line-number="8">init <span class="op">=</span> tf.global_variables_initializer()</a>
+<a class="sourceLine" id="cb18-9" data-line-number="9"><span class="cf">with</span> tf.Session() <span class="im">as</span> sess:</a>
+<a class="sourceLine" id="cb18-10" data-line-number="10">sess.run(init)</a>
+<a class="sourceLine" id="cb18-11" data-line-number="11"><span class="bu">print</span>(<span class="bu">type</span>(b))</a>
+<a class="sourceLine" id="cb18-12" data-line-number="12"><span class="bu">print</span>(sess.run(result))</a></code></pre></div>
+<h2 id="tensor-computation">Tensor computation</h2>
+<div class="sourceCode" id="cb19"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb19-1" data-line-number="1">a <span class="op">=</span> tf.constant([[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">5</span>],[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">7</span>]])</a>
+<a class="sourceLine" id="cb19-2" data-line-number="2">b <span class="op">=</span> tf.constant([<span class="dv">2</span>,<span class="dv">3</span>])</a>
+<a class="sourceLine" id="cb19-3" data-line-number="3"><span class="cf">with</span> tf.Session() <span class="im">as</span> sess:</a>
+<a class="sourceLine" id="cb19-4" data-line-number="4"><span class="bu">print</span>(sess.run(a))</a>
+<a class="sourceLine" id="cb19-5" data-line-number="5"><span class="bu">print</span>(sess.run(b))</a>
+<a class="sourceLine" id="cb19-6" data-line-number="6"><span class="bu">print</span>(sess.run(a<span class="op">/</span>tf.expand_dims(b, <span class="dv">1</span>)))</a></code></pre></div>
+<h2 id="tensor-reshape">Tensor reshape</h2>
+<p>确认rehsape逻辑，[batch_size, max_len, feature_dim]</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb20-1" data-line-number="1">a <span class="op">=</span> tf.constant([[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">5</span>],[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">7</span>],[<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>],[<span class="dv">1</span>,<span class="dv">5</span>,<span class="dv">9</span>]])</a>
+<a class="sourceLine" id="cb20-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb20-3" data-line-number="3"><span class="cf">with</span> tf.Session() <span class="im">as</span> sess:</a>
+<a class="sourceLine" id="cb20-4" data-line-number="4"><span class="bu">print</span>(sess.run(tf.reshape(a, [<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">3</span>])))</a></code></pre></div>
+<h2 id="import-.py-from-parent-directory">import .py from parent directory</h2>
+<div class="sourceCode" id="cb21"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="im">import</span> os, sys</a>
+<a class="sourceLine" id="cb21-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb21-3" data-line-number="3">sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(<span class="va">__file__</span>))))</a></code></pre></div>
 
       
     </div>
@@ -1092,7 +1095,7 @@ sys<span class="token punctuation">.</span>path<span class="token punctuation">.
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Background"><span class="nav-number">1.</span> <span class="nav-text">Background</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Some-complaints"><span class="nav-number">2.</span> <span class="nav-text">Some complaints</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#What’s-exactly-in-this-blog"><span class="nav-number">3.</span> <span class="nav-text">What’s exactly in this blog</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Who-should-read-this-blog"><span class="nav-number">4.</span> <span class="nav-text">Who should read this blog</span></a></li></ol><li class="nav-item nav-level-1"><a class="nav-link" href="#data-input-process"><span class="nav-number"></span> <span class="nav-text">data input process</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tfrecord-saving-reading"><span class="nav-number">1.</span> <span class="nav-text">tfrecord saving, reading</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Experiment"><span class="nav-number">2.</span> <span class="nav-text">Experiment</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Tensorflow-LSTM-CELL"><span class="nav-number"></span> <span class="nav-text">Tensorflow LSTM CELL</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Single-cell-case"><span class="nav-number">1.</span> <span class="nav-text">Single cell case</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Multicell-case"><span class="nav-number">2.</span> <span class="nav-text">Multicell case</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#fast-predict"><span class="nav-number"></span> <span class="nav-text">fast predict</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tensorflow-fast-predict"><span class="nav-number">1.</span> <span class="nav-text">tensorflow fast predict</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tf-data-Dataset-from-generator"><span class="nav-number">2.</span> <span class="nav-text">tf.data.Dataset().from_generator</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#test-shared-embedding"><span class="nav-number"></span> <span class="nav-text">test shared embedding</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-How-to-use-embedding"><span class="nav-number">0.1.</span> <span class="nav-text">1. How to use embedding</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-How-tf-Varlen-react-when-read-in-batch"><span class="nav-number">0.2.</span> <span class="nav-text">2. How tf.Varlen react when read in batch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#embedding-make-parse-example-spec"><span class="nav-number">0.3.</span> <span class="nav-text">embedding:  make_parse_example_spec</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#check-tf-varlen"><span class="nav-number">1.</span> <span class="nav-text">check tf.varlen</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#check-naming-of-these-method"><span class="nav-number">2.</span> <span class="nav-text">check naming of these method</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#embedding-input-layer"><span class="nav-number">3.</span> <span class="nav-text">embedding - input_layer</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Miscellany"><span class="nav-number"></span> <span class="nav-text">Miscellany</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tf-gather-nd"><span class="nav-number">1.</span> <span class="nav-text">tf.gather_nd</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tf-less-tf-where"><span class="nav-number">2.</span> <span class="nav-text">tf.less + tf.where</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tensor-computation"><span class="nav-number">3.</span> <span class="nav-text">Tensor computation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tensor-reshape"><span class="nav-number">4.</span> <span class="nav-text">Tensor reshape</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#import-py-from-parent-directory"><span class="nav-number">5.</span> <span class="nav-text">import .py from parent directory</span></a></li></ol></li></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#background"><span class="nav-number">1.</span> <span class="nav-text">Background</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#some-complaints"><span class="nav-number">2.</span> <span class="nav-text">Some complaints</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#whats-exactly-in-this-blog"><span class="nav-number">3.</span> <span class="nav-text">What&#39;s exactly in this blog</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#who-should-read-this-blog"><span class="nav-number">4.</span> <span class="nav-text">Who should read this blog</span></a></li></ol><li class="nav-item nav-level-1"><a class="nav-link" href="#data-input-process"><span class="nav-number"></span> <span class="nav-text">data input process</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tfrecord-saving-reading"><span class="nav-number">1.</span> <span class="nav-text">tfrecord saving, reading</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#experiment"><span class="nav-number">2.</span> <span class="nav-text">Experiment</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#tensorflow-lstm-cell"><span class="nav-number"></span> <span class="nav-text">Tensorflow LSTM CELL</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#single-cell-case"><span class="nav-number">1.</span> <span class="nav-text">Single cell case</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#multicell-case"><span class="nav-number">2.</span> <span class="nav-text">Multicell case</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#fast-predict"><span class="nav-number"></span> <span class="nav-text">fast predict</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tensorflow-fast-predict"><span class="nav-number">1.</span> <span class="nav-text">tensorflow fast predict</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tf.data.dataset.from_generator"><span class="nav-number">2.</span> <span class="nav-text">tf.data.Dataset().from_generator</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#test-shared-embedding"><span class="nav-number"></span> <span class="nav-text">test shared embedding</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#how-to-use-embedding"><span class="nav-number">0.1.</span> <span class="nav-text">1. How to use embedding</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#how-tf.varlen-react-when-read-in-batch"><span class="nav-number">0.2.</span> <span class="nav-text">2. How tf.Varlen react when read in batch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#embedding-make_parse_example_spec"><span class="nav-number">0.3.</span> <span class="nav-text">embedding: make_parse_example_spec</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#check-tf.varlen"><span class="nav-number">1.</span> <span class="nav-text">check tf.varlen</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#check-naming-of-these-method"><span class="nav-number">2.</span> <span class="nav-text">check naming of these method</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#embedding---input_layer"><span class="nav-number">3.</span> <span class="nav-text">embedding - input_layer</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#miscellany"><span class="nav-number"></span> <span class="nav-text">Miscellany</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tf.gather_nd"><span class="nav-number">1.</span> <span class="nav-text">tf.gather_nd</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tf.less-tf.where"><span class="nav-number">2.</span> <span class="nav-text">tf.less + tf.where</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tensor-computation"><span class="nav-number">3.</span> <span class="nav-text">Tensor computation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tensor-reshape"><span class="nav-number">4.</span> <span class="nav-text">Tensor reshape</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#import-.py-from-parent-directory"><span class="nav-number">5.</span> <span class="nav-text">import .py from parent directory</span></a></li></ol></li></div>
             
 
           </div>
