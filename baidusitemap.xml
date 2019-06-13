@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>http://fdsmlhn.github.io/2017/10/22/Derivation%20of%20Back%20Propagation%20Through%20Time%20(BPTT)%20-%20Vanilla%20Recurrent%20Neural%20Network(RNN)/</loc>
+    <lastmod>2019-06-13</lastmod>
+  </url>  <url>
     <loc>http://fdsmlhn.github.io/2018/08/12/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/</loc>
     <lastmod>2018-08-12</lastmod>
-  </url>  <url>
-    <loc>http://fdsmlhn.github.io/2017/10/22/Derivation%20of%20Back%20Propagation%20Through%20Time%20(BPTT)%20-%20Vanilla%20Recurrent%20Neural%20Network(RNN)/</loc>
-    <lastmod>2018-02-10</lastmod>
   </url>  <url>
     <loc>http://fdsmlhn.github.io/2018/02/09/Deep-Residual-Learning-For-Image-Recognition/</loc>
     <lastmod>2018-02-10</lastmod>
