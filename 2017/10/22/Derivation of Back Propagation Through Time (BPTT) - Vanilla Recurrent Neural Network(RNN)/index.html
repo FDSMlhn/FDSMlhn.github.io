@@ -104,7 +104,7 @@
 <meta property="og:site_name" content="Nevermore">
 <meta property="og:description" content="During the learning of RNN, I undergone a very tough time to deduce the BPTT for vanilla RNN. There are some pieces of work online that try to explain this process(click here or here). However, I fou">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-06-13T17:18:21.555Z">
+<meta property="og:updated_time" content="2019-06-13T17:32:51.769Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Derivation of Back Propagation Through Time (BPTT) - Vanilla Recurrent Neural Network(RNN)">
 <meta name="twitter:description" content="During the learning of RNN, I undergone a very tough time to deduce the BPTT for vanilla RNN. There are some pieces of work online that try to explain this process(click here or here). However, I fou">
@@ -371,7 +371,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-06-13 10:18:21" itemprop="dateModified" datetime="2019-06-13T10:18:21-07:00">2019-06-13</time>
+                <time title="修改时间：2019-06-13 10:32:51" itemprop="dateModified" datetime="2019-06-13T10:32:51-07:00">2019-06-13</time>
               
             
           </span>
@@ -474,6 +474,7 @@ Loss &amp;= \sum^{N}_{i=1} L(y_i, \hat{\mathbf{Y_i}})
 \]</span></p>
 <p>Although the product of all these things is a simple matrix. However, there are a lot of waste in the process. We have to see that the intermediate matrice are some 4 dimemsional tensors, e.g. <span class="math inline">\(\frac{\mathrm{d}{\mathbf{Z}^{(1)}}}{\mathrm{d}{\mathbf{W_1}}}\)</span> is a tensor of <span class="math inline">\((D, D_1, N, D_1)\)</span> dimension. For every element <span class="math inline">\(W_{1ij}\)</span> among the <span class="math inline">\((D, D_1)\)</span> elements in <span class="math inline">\(W_1\)</span>. There exists a <span class="math inline">\((N, D_1)\)</span> matrix of derivative of <span class="math inline">\(\mathbf{Z}^{(1)}\)</span> to <span class="math inline">\(W_{1ij}\)</span>. And among elements <span class="math inline">\(N * D_1\)</span> of this matrix, only N elements are none zero(the ones of neuron j in layer 1, namely the column j of matrix <span class="math inline">\(\mathbf{Z}^{(1)}\)</span>). So as a result, a prevailing tricky one comes into our views.</p>
 <h3 id="tricky-derivation">Tricky derivation</h3>
+<p>Please Note in the tricky version, I kind of misuse the math symbol derivative <span class="math inline">\(dx\)</span>, it means <span class="math inline">\(\frac{\partial{L}}{\partial{x}}\)</span> in my case just for the seek of convenience.</p>
 <p>Instead of computing the result all in the end, we will try to decrease this problem and conquer it. For example, in the process, we will try to derive <span class="math inline">\(\frac{\partial{L}}{\partial{\mathbf{Z}^{(2)}}}\)</span> first and go on. In the Python realization, we will note this as a <span class="math inline">\(\mathrm{d}\mathbf{Z}^{(2)}\)</span>, which loos like a total derivative sort of thing although it's a partial derivative. Thus, the <strong>partial</strong> derivative will be like waterflow and easier to compute. On the stage of this, we will furthur consider every element of next matrix to which we shall take derivative, and try to summarize them into a compact matrix multiplication. Like the example we discuss in the previous method, we will try to derive <span class="math inline">\(\frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W_1}}}\)</span> with <span class="math inline">\(\mathrm{d}\mathbf{Z}^{(2)}\)</span>. Then, we can just see what we get if we want to have <span class="math inline">\(\frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W_{1ij}}}}\)</span>. With ease we know that it is the inner product of <span class="math inline">\(\mathrm{d}\mathbf{Z}^{(2)}_{j}\)</span> and <span class="math inline">\(\mathbf{X}_{i}\)</span>, which are both shape of <span class="math inline">\((N,)\)</span>. As a result, the 4 dimensional tensor multiplication in the above will become:</p>
 <p><span class="math display">\[
 \frac{\mathrm{d}L}{\mathrm{d}{\mathbf{W_1}}} = \mathrm{X}^{T} \mathrm{d}\mathbf{Z}^{(2)}
@@ -531,7 +532,7 @@ d\mathbf{a}^{(t)} \\
 \frac{\partial \mathbf{a}^{(t)}}{\partial \mathbf{h}^{(t-1)}} )d\mathbf{a}^{(t)}
 \end{aligned}
 \]</span></p>
-<p>For the last equation, the first part is simply. If we use the result from above. The product will simply be $ d{^{(t)}} = (<sup>{(t-1)})</sup>T d^{(t)}$. And then we can furthur integrate the last part of the equation. At last we get:</p>
+<p>For the last equation, the first part is simply. If we use the result from above. The product will simply be <span class="math inline">\(d{\mathbf{W_h}^{(t)}} = (\mathbf{h}^{(t-1)})^T d\mathbf{a}^{(t)}\)</span>. And then we can furthur integrate the last part of the equation. At last we get:</p>
 <p><span class="math display">\[
 \begin{aligned}
 \frac{\mathrm{d}L^{(t)}}{\mathrm{d}\mathbf{W_h}} &amp;= d{\mathbf{W_h}^{(t)}} + 
