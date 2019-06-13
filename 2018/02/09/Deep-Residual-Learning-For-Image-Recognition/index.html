@@ -104,13 +104,13 @@
 <meta property="og:site_name" content="Nevermore">
 <meta property="og:description" content="This passage will lead you through the whole process of the implementation of image classification tasks on CIFAR-10 and also explain some confusing parts for beginners in detail. Besides, I also put">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://fdsmlhn.github.io/2018/02/09/Deep-Residual-Learning-For-Image-Recognition/main_files/main_5_1.png">
-<meta property="og:image" content="http://fdsmlhn.github.io/2018/02/09/Deep-Residual-Learning-For-Image-Recognition/main_files/main_11_0.png">
-<meta property="og:updated_time" content="2018-02-10T03:55:16.653Z">
+<meta property="og:image" content="http://fdsmlhn.github.io/images/3/main_5_1.png">
+<meta property="og:image" content="http://fdsmlhn.github.io/images/3/main_11_0.png">
+<meta property="og:updated_time" content="2019-06-13T18:26:14.937Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Deep Residual Learning For Image Recognition">
 <meta name="twitter:description" content="This passage will lead you through the whole process of the implementation of image classification tasks on CIFAR-10 and also explain some confusing parts for beginners in detail. Besides, I also put">
-<meta name="twitter:image" content="http://fdsmlhn.github.io/2018/02/09/Deep-Residual-Learning-For-Image-Recognition/main_files/main_5_1.png">
+<meta name="twitter:image" content="http://fdsmlhn.github.io/images/3/main_5_1.png">
 
 
 
@@ -359,12 +359,24 @@
                 
               
 
-              <time title="创建时间：2018-02-09 18:28:09 / 修改时间：19:55:16" itemprop="dateCreated datePublished" datetime="2018-02-09T18:28:09-08:00">2018-02-09</time>
+              <time title="创建时间：2018-02-09 18:28:09" itemprop="dateCreated datePublished" datetime="2018-02-09T18:28:09-08:00">2018-02-09</time>
             
 
             
               
 
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-06-13 11:26:14" itemprop="dateModified" datetime="2019-06-13T11:26:14-07:00">2019-06-13</time>
               
             
           </span>
@@ -457,7 +469,7 @@
 Files already downloaded and verified
 Files already downloaded and verified</code></pre>
 <figure>
-<img src="main_files/main_5_1.png" alt="png"><figcaption>png</figcaption>
+<img src="/images/3/main_5_1.png" alt="png"><figcaption>png</figcaption>
 </figure>
 <p>Then we will import Resnet-18 to train our dataset on the training data. These two models use different architecture, one with basic block and the other with one called bottleneck. I specifically choose these two different sorts of models with relatively less layers due to the limit of the computational resources.</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> resnet <span class="keyword">import</span> Resnet18</span><br><span class="line"></span><br><span class="line">net = Resnet18()</span><br><span class="line"></span><br><span class="line">criterion = nn.CrossEntropyLoss()</span><br><span class="line"></span><br><span class="line"><span class="comment">#Adam does not perform so good here</span></span><br><span class="line">optimizer = optim.SGD(net.parameters(), lr=<span class="number">0.1</span>, momentum=<span class="number">0.9</span>, weight_decay=<span class="number">8e-4</span>, nesterov= <span class="keyword">True</span>)</span><br><span class="line">scheduler = MultiStepLR(optimizer, [<span class="number">100</span>,<span class="number">150</span>], gamma=<span class="number">0.1</span>)</span><br></pre></td></tr></table></figure>
@@ -466,7 +478,7 @@ Files already downloaded and verified</code></pre>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> pickle</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> open(<span class="string">'resnet18data.pkl'</span>,<span class="string">'wb'</span>) <span class="keyword">as</span> f:</span><br><span class="line">    pickle.dump(train_data,f)</span><br><span class="line"><span class="keyword">with</span> open(<span class="string">'resnet18data.pkl'</span>, <span class="string">'rb'</span>) <span class="keyword">as</span> f:</span><br><span class="line">    train_data = pickle.load(f)</span><br></pre></td></tr></table></figure>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">plt.style.use(<span class="string">'seaborn-white'</span>)</span><br><span class="line">plt.rc(<span class="string">'font'</span>, size=<span class="number">20</span>)</span><br><span class="line">plt.rc(<span class="string">'axes'</span>, titlesize=<span class="number">20</span>)</span><br><span class="line">plt.rc(<span class="string">'axes'</span>, labelsize=<span class="number">20</span>)    <span class="comment"># fontsize of the x and y labels</span></span><br><span class="line">plt.rc(<span class="string">'xtick'</span>, labelsize=<span class="number">20</span>)    <span class="comment"># fontsize of the tick labels</span></span><br><span class="line"></span><br><span class="line">gs = gridspec.GridSpec(<span class="number">2</span>,<span class="number">1</span>)</span><br><span class="line">gs.update(hspace=<span class="number">0.5</span>)</span><br><span class="line">fig = plt.figure(figsize=(<span class="number">16</span>,<span class="number">10</span>))</span><br><span class="line">fig1 = fig.add_subplot(gs[<span class="number">0</span>,<span class="number">0</span>])</span><br><span class="line">fig2 = fig.add_subplot(gs[<span class="number">1</span>,<span class="number">0</span>])</span><br><span class="line">fig1.spines[<span class="string">'right'</span>].set_visible(<span class="keyword">False</span>)</span><br><span class="line">fig1.spines[<span class="string">'top'</span>].set_visible(<span class="keyword">False</span>)</span><br><span class="line"><span class="comment"># for item in [fig1.xaxis.label, fig1.yaxis.label,fig2.xaxis.label, fig2.yaxis.label]:</span></span><br><span class="line"><span class="comment">#     item.set_fontsize(10)</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">fig1.plot([i * <span class="number">0.005</span> <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">1</span>,len(train_data[<span class="string">'loss_hist'</span>])+<span class="number">1</span>)],train_data[<span class="string">'loss_hist'</span>],color=<span class="string">'black'</span>)</span><br><span class="line">fig1.set(title= <span class="string">'Loss trajectory of training'</span>,ylabel=<span class="string">'Loss'</span>,xlabel=<span class="string">'Iter.(1e4)'</span>)</span><br><span class="line"></span><br><span class="line">fig2.plot([<span class="number">100</span>-i <span class="keyword">for</span> i <span class="keyword">in</span> train_data[<span class="string">'train_acc_hist'</span>]], color=<span class="string">'red'</span>,linestyle=<span class="string">'-.'</span>,label = <span class="string">'train'</span>)</span><br><span class="line">fig2.plot([<span class="number">100</span>-i <span class="keyword">for</span> i <span class="keyword">in</span> train_data[<span class="string">'test_acc_hist'</span>]], color=<span class="string">'blue'</span>,linestyle=<span class="string">'-'</span>,label=<span class="string">'test'</span>)</span><br><span class="line">fig2.plot([<span class="number">100</span>-i <span class="keyword">for</span> i <span class="keyword">in</span> train_data[<span class="string">'val_acc_hist'</span>]], color=<span class="string">'green'</span>,linestyle=<span class="string">'-'</span>,label=<span class="string">'val'</span>)</span><br><span class="line">fig2.legend(frameon=<span class="keyword">True</span>)</span><br><span class="line">fig2.spines[<span class="string">'right'</span>].set_visible(<span class="keyword">False</span>)</span><br><span class="line">fig2.spines[<span class="string">'top'</span>].set_visible(<span class="keyword">False</span>)</span><br><span class="line">fig2.axhline(y=[<span class="number">5</span>],alpha=<span class="number">0.5</span>, linestyle=<span class="string">'--'</span>,color=<span class="string">'k'</span>,linewidth=<span class="number">1</span>)</span><br><span class="line">fig2.axhline(y=[<span class="number">10</span>],alpha=<span class="number">0.5</span>, linestyle=<span class="string">'--'</span>,color=<span class="string">'k'</span>,linewidth=<span class="number">1</span>)</span><br><span class="line">_=fig2.set(title= <span class="string">'Top-1 Accuracy of Resnet18 on CIFAR-10'</span>,ylim=(<span class="number">0</span>,<span class="number">20</span>),xlabel=<span class="string">'Epoch'</span>,ylabel=<span class="string">'Error(%)'</span>)</span><br><span class="line"><span class="comment">#fig.plot()</span></span><br></pre></td></tr></table></figure>
 <figure>
-<img src="main_files/main_11_0.png" alt="png"><figcaption>png</figcaption>
+<img src="/images/3/main_11_0.png" alt="png"><figcaption>png</figcaption>
 </figure>
 <p>There are two things we need to pay attention to:</p>
 <ol type="1">
