@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>http://fdsmlhn.github.io/2018/08/12/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/</loc>
-    <lastmod>2019-06-13</lastmod>
+    <loc>http://fdsmlhn.github.io/2019/06/14/Tensorflow-for-Graph-Convolutional-network/</loc>
+    <lastmod>2019-06-15</lastmod>
   </url>  <url>
     <loc>http://fdsmlhn.github.io/2018/02/09/Deep-Residual-Learning-For-Image-Recognition/</loc>
+    <lastmod>2019-06-15</lastmod>
+  </url>  <url>
+    <loc>http://fdsmlhn.github.io/2018/08/12/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/</loc>
     <lastmod>2019-06-13</lastmod>
   </url>  <url>
     <loc>http://fdsmlhn.github.io/2017/11/02/Understanding%20im2col%20implementation%20in%20Python(numpy%20fancy%20indexing)/</loc>

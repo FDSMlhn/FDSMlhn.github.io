@@ -311,6 +311,176 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://fdsmlhn.github.io/2019/06/14/Tensorflow-for-Graph-Convolutional-network/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Haonan Li">
+      <meta itemprop="description" content="Strong Mind = Success">
+      <meta itemprop="image" content="/images/selfie1.JPG">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Nevermore">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/06/14/Tensorflow-for-Graph-Convolutional-network/" class="post-title-link" itemprop="url">Tensorflow for Graph Convolutional Network</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-06-14 20:34:38" itemprop="dateCreated datePublished" datetime="2019-06-14T20:34:38-07:00">2019-06-14</time>
+            
+
+            
+          </span>
+
+          
+
+          
+            
+            
+              
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+            
+                <span class="post-meta-item-text">评论数：</span>
+                <a href="/2019/06/14/Tensorflow-for-Graph-Convolutional-network/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/06/14/Tensorflow-for-Graph-Convolutional-network/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+            <span id="/2019/06/14/Tensorflow-for-Graph-Convolutional-network/" class="leancloud_visitors" data-flag-title="Tensorflow for Graph Convolutional Network">
+              <span class="post-meta-divider">|</span>
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读次数：</span>
+              
+                <span class="leancloud-visitors-count"></span>
+            </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h2 id="context">Context</h2>
+<p>Recently I've done a project which needs to model using Graph data(not image graph, but network graph). A big problem I encountered is how to slice subgraph into model training. An intuitive idea will be like using sparse matrix to slice out the corresponding neighbors for any given node. But due to the constraint of <code>tf.SparseTensor</code>, which do not support frequent and also efficient slice operation for now, I choose to use <code>csr_matrix</code> in <code>scipy</code> to take care of this part.</p>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2019/06/14/Tensorflow-for-Graph-Convolutional-network/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://fdsmlhn.github.io/2018/08/12/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -560,7 +730,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-06-13 11:31:44" itemprop="dateModified" datetime="2019-06-13T11:31:44-07:00">2019-06-13</time>
+                <time title="修改时间：2019-06-14 20:34:24" itemprop="dateModified" datetime="2019-06-14T20:34:24-07:00">2019-06-14</time>
               
             
           </span>
@@ -1085,7 +1255,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-count">5</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -1108,7 +1278,13 @@
                     
                       
                     
-                    <span class="site-state-item-count">4</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
                     <span class="site-state-item-name">标签</span>
                   
                 </div>
@@ -1410,6 +1586,8 @@
 
   
   
+    
+      
     
       
     

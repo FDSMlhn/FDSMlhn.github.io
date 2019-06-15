@@ -2,16 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://fdsmlhn.github.io/2018/08/12/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/</loc>
+    <loc>http://fdsmlhn.github.io/2019/06/14/Tensorflow-for-Graph-Convolutional-network/</loc>
     
-    <lastmod>2019-06-13T18:44:19.276Z</lastmod>
+    <lastmod>2019-06-15T03:34:38.502Z</lastmod>
     
   </url>
   
   <url>
     <loc>http://fdsmlhn.github.io/2018/02/09/Deep-Residual-Learning-For-Image-Recognition/</loc>
     
-    <lastmod>2019-06-13T18:31:44.164Z</lastmod>
+    <lastmod>2019-06-15T03:34:24.238Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://fdsmlhn.github.io/2018/08/12/Advanced-Tensorflow-Usage-and-Experiment-from-input-fn-to-modelling-part/</loc>
+    
+    <lastmod>2019-06-13T18:44:19.276Z</lastmod>
     
   </url>
   
